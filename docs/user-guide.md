@@ -1,4 +1,4 @@
-# Using AI Coding Assistants Safely on HPC with Markdown Instructions
+# Using AI Coding Assistants Safely on HPC
 
 ## Purpose
 
