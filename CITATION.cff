@@ -1,0 +1,15 @@
+cff-version: 1.2.0
+message: "If you use this project, please cite the associated paper."
+title: "HPC AI Governance: Progressive AI Integration for Research Computing"
+type: software
+authors:
+  - name: "Research Computing Project Team"
+version: 0.1.0
+date-released: 2026-08-27
+repository-code: "TO_BE_ADDED"
+abstract: >
+  A project for evaluating user-governed Markdown policies and
+  institution-governed MCP controls for AI-assisted HPC workflows,
+  including Slurm correctness, GPU utilization, and Linux Pressure
+  Stall Information.
+license: "NOASSERTION"

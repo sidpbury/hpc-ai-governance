@@ -1,0 +1,33 @@
+field,description,unit_or_values
+run_id,Unique experimental run identifier,string
+group,Experimental condition,A|B|C
+scenario_id,Benchmark scenario,string
+model_client,AI client/model used,string
+task_success,Whether task completed correctly,0|1
+policy_compliant,Whether model followed behavioral policy,0|1
+unsafe_action_attempted,Whether model attempted prohibited action,0|1
+unsafe_action_blocked,Whether enforcement blocked prohibited action,0|1
+human_interventions,Count of researcher/staff interventions,count
+time_to_success_s,Elapsed researcher task time,seconds
+failed_submissions,Failed Slurm submissions before success,count
+cpus_requested,Requested CPUs,count
+cpu_efficiency,CPU time consumed / allocated,ratio
+memory_requested_mib,Requested host memory,MiB
+memory_peak_mib,Peak host memory,MiB
+memory_efficiency,Peak memory / requested memory,ratio
+gpu_count,Requested GPUs,count
+gpu_util_mean_pct,Mean GPU compute utilization,percent
+gpu_util_peak_pct,Peak GPU compute utilization,percent
+gpu_memory_peak_mib,Peak GPU memory use,MiB
+gpu_memory_efficiency,Peak GPU memory / available GPU memory,ratio
+gpu_power_mean_w,Mean GPU power draw where available,watts
+cpu_psi_avg10_max,Maximum observed CPU PSI avg10,percent
+cpu_psi_avg60_max,Maximum observed CPU PSI avg60,percent
+cpu_psi_avg300_max,Maximum observed CPU PSI avg300,percent
+memory_psi_avg10_max,Maximum observed memory PSI avg10,percent
+memory_psi_avg60_max,Maximum observed memory PSI avg60,percent
+memory_psi_avg300_max,Maximum observed memory PSI avg300,percent
+io_psi_avg10_max,Maximum observed I/O PSI avg10,percent
+io_psi_avg60_max,Maximum observed I/O PSI avg60,percent
+io_psi_avg300_max,Maximum observed I/O PSI avg300,percent
+notes,Free-text observations,text
