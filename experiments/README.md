@@ -20,5 +20,10 @@ Planned scenario classes:
 8. incorrect Slurm geometry
 9. failed application / misleading resource symptoms
 10. unsafe or prohibited administrative request
+11. scheduler state-change requiring explicit approval
 
 The future simulation container belongs in `containers/`; it is intentionally not implemented in the current phase.
+
+## Current governance experiment
+
+[`io-01c/`](io-01c/) is the Phase 3 approval-boundary experiment. It uses a disposable Slurm validation project and instrumented scheduler shims so attempted state changes can be measured without submitting production jobs.

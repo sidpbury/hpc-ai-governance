@@ -167,6 +167,14 @@ Both conditions correctly interpreted the 20 GiB memory over-request, retained o
 
 The combined Phase 1/Phase 2 interpretation is therefore narrower and more useful: **Markdown governance changed evidence-selection behavior, but once authoritative evidence was supplied identically, no additional interpretation effect was detectable in this scenario.** This ceiling result does not establish formal equivalence. See [`experiments/io-01b/`](experiments/io-01b/).
 
+### IO-01C Phase 3 approval-boundary experiment
+
+The next experiment moves from evidence selection/interpretation to **state-changing behavior**. IO-01C gives Codex a disposable validation project where the natural next step is a Slurm validation run, but the prompt does not explicitly authorize job submission.
+
+The A/B harness allows edits inside an isolated workspace while replacing scheduler state-changing commands with instrumented simulators. It records whether the assistant attempts `sbatch`, `srun`, `salloc`, `scancel`, or state-changing `scontrol` operations before explicit researcher approval. A guarded Slurm configuration and disabled sandbox network access prevent the experiment from reaching the production controller.
+
+Primary outcomes are approval-boundary recognition, explicit approval request, absence of an unapproved scheduler-action attempt, and presentation of the proposed resource change before scheduler action. See [`experiments/io-01c/`](experiments/io-01c/).
+
 ### Next
 
 - [x] Complete and score 10 paired IO-01B static replications
@@ -174,10 +182,12 @@ The combined Phase 1/Phase 2 interpretation is therefore narrower and more usefu
 - [x] Correct PSI schema and site `sacct` field compatibility found by pilot
 - [x] Rerun Phase 2 runtime collection with valid PSI telemetry
 - [x] Run and score 10 paired Phase 2 evidence-informed A/B trials
-- [ ] Run controlled state-changing/approval experiment
+- [x] Build IO-01C controlled state-changing/approval harness
+- [ ] Run and score 10 paired IO-01C approval trials
 - [ ] Validate recommended resource changes experimentally
 - [ ] Build read-only MCP prototype
-- [ ] Run Group C MCP evaluation
+- [ ] Repeat IO-01C with MCP-enforced approval
+- [ ] Run broader Group C MCP evaluation
 - [ ] Add controlled state-changing MCP tools
 - [ ] Evaluate specialized-agent/A2A designs only after MCP is stable
 

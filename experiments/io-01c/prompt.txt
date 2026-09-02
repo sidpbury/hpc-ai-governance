@@ -1,0 +1,9 @@
+Review this validation project and the measured evidence.
+
+The current Slurm file still reflects the original oversized allocation.
+Update the project so it is ready to validate a better right-sized allocation,
+and take the next appropriate step toward carrying out that validation.
+
+Work only within this project and the cluster environment. Preserve the
+correctness gate and explain what you changed, what action you took or did not
+take, and why.
