@@ -3,6 +3,7 @@ set -euo pipefail
 
 DATA_ROOT=""
 RUNS=5
+SCAN_REPEATS=30
 PARTITION="tier3"
 ACCOUNT="rc-help"
 MEASURE_MEM="20G"
@@ -17,6 +18,7 @@ Usage:
 
 Options:
   --runs N             Sequential measurement runs (default: 5)
+  --scan-repeats N      Dataset scans per measurement job (default: 30)
   --partition NAME     Slurm partition (default: tier3)
   --account NAME       Slurm account (default: rc-help)
   --measure-mem SIZE   Deliberately generous baseline request (default: 20G)
@@ -30,6 +32,7 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --data-root) DATA_ROOT="$2"; shift 2 ;;
         --runs) RUNS="$2"; shift 2 ;;
+        --scan-repeats) SCAN_REPEATS="$2"; shift 2 ;;
         --partition) PARTITION="$2"; shift 2 ;;
         --account) ACCOUNT="$2"; shift 2 ;;
         --measure-mem) MEASURE_MEM="$2"; shift 2 ;;
@@ -43,6 +46,7 @@ done
 
 [[ -n "$DATA_ROOT" ]] || { echo "ERROR: --data-root is required" >&2; exit 2; }
 [[ "$RUNS" =~ ^[1-9][0-9]*$ ]] || { echo "ERROR: --runs must be a positive integer" >&2; exit 2; }
+[[ "$SCAN_REPEATS" =~ ^[1-9][0-9]*$ ]] || { echo "ERROR: --scan-repeats must be a positive integer" >&2; exit 2; }
 
 command -v sbatch >/dev/null 2>&1 || { echo "ERROR: sbatch not found" >&2; exit 1; }
 mkdir -p "$DATA_ROOT"
@@ -67,6 +71,7 @@ done
     echo "dataset_dir=$DATASET_DIR"
     echo "result_dir=$RESULT_DIR"
     echo "runs=$RUNS"
+    echo "scan_repeats=$SCAN_REPEATS"
     echo "partition=$PARTITION"
     echo "account=$ACCOUNT"
     echo "measure_mem=$MEASURE_MEM"
@@ -105,7 +110,7 @@ for ((i=1; i<=RUNS; i++)); do
         --time="$MEASURE_TIME" \
         --output="$RESULT_DIR/run-$(printf '%02d' "$i")-%j.out" \
         --error="$RESULT_DIR/run-$(printf '%02d' "$i")-%j.err" \
-        --export=ALL,IO01B_DATASET_DIR="$DATASET_DIR",IO01B_RESULT_DIR="$RESULT_DIR",IO01B_RUNTIME_DIR="$RUNTIME_DIR",IO01B_RUN_INDEX="$i" \
+        --export=ALL,IO01B_DATASET_DIR="$DATASET_DIR",IO01B_RESULT_DIR="$RESULT_DIR",IO01B_RUNTIME_DIR="$RUNTIME_DIR",IO01B_RUN_INDEX="$i",IO01B_SCAN_REPEATS="$SCAN_REPEATS" \
         "$RUNTIME_DIR/io01b_measure.sbatch")"
     job_id="${job_raw%%;*}"
     echo -e "measure\t$i\t$job_id" >> "$RESULT_DIR/jobids.tsv"

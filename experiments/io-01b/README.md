@@ -67,3 +67,16 @@ The researcher-controlled runtime harness is under [`runtime/`](runtime/). It:
 5. produces a neutral evidence packet for fresh A/B AI sessions.
 
 No AI client submits the runtime jobs in this phase; the researcher controls execution.
+
+
+### Phase 2 pilot status
+
+The first runtime pilot (`20260902_152030`) completed the corrected workload
+and verified checksums in all five measurements, but the PSI collector failed
+because the SPORC kernel exposed CPU `full` pressure fields not present in the
+initial CSV schema. The pilot is retained for reproducibility but excluded from
+the evidence-fed A/B comparison. See `runtime/pilot-20260902.md`.
+
+The corrected harness now validates PSI collection before each measured run,
+uses SPORC-compatible `sacct` fields, and defaults to 30 scans per measurement
+so the PSI sample series spans a more useful interval.

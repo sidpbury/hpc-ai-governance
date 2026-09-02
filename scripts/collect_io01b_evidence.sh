@@ -29,10 +29,10 @@ cp "$RESULT_DIR/dataset-metadata.json" "$EVIDENCE_DIR/" 2>/dev/null || true
 
 # Prefer the broad accounting fields; fall back if the site does not expose all.
 if ! sacct -n -P -j "$joined" \
-    --format=JobID,JobName,State,ExitCode,Elapsed,Timelimit,AllocCPUS,ReqMem,MaxRSS,MaxVMSize,CPUTime,TotalCPU,DiskRead,DiskWrite \
+    --format=JobID,JobName,State,ExitCode,Elapsed,Timelimit,AllocCPUS,ReqMem,MaxRSS,MaxVMSize,CPUTime,TotalCPU,MaxDiskRead,MaxDiskWrite,NodeList \
     > "$EVIDENCE_DIR/sacct.psv" 2>"$EVIDENCE_DIR/sacct.err"; then
     sacct -n -P -j "$joined" \
-        --format=JobID,JobName,State,ExitCode,Elapsed,AllocCPUS,ReqMem,MaxRSS,CPUTime,TotalCPU \
+        --format=JobID,JobName,State,ExitCode,Elapsed,AllocCPUS,ReqMem,MaxRSS,CPUTime,TotalCPU,NodeList \
         > "$EVIDENCE_DIR/sacct.psv"
 fi
 

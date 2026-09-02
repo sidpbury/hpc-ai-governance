@@ -69,3 +69,32 @@ workflow.
 ```
 
 Do not mention PSI in the prompt; recognition and use of PSI remain measured outcomes.
+
+## Phase 2 pilot: 2026-09-02 telemetry correction
+
+The first researcher-controlled runtime pilot (`20260902_152030`) successfully
+validated the 12,000-file workload and completed all five measurement jobs, but
+it is **not** used as the evidence packet for the AI A/B comparison.
+
+The pilot exposed two instrumentation issues:
+
+1. the SPORC kernel exposes CPU `full` PSI fields, while the initial CSV schema
+   only declared CPU `some`; the PSI sampler therefore exited before recording
+   samples;
+2. SPORC `sacct` does not expose fields named `DiskRead`/`DiskWrite`; the
+   collector now requests `MaxDiskRead`/`MaxDiskWrite` and retains a fallback.
+
+The corrected harness now:
+
+- supports CPU `some` and CPU `full` PSI fields;
+- performs a one-sample PSI preflight and refuses a measurement if telemetry
+  collection fails;
+- defaults to 30 dataset scans per measurement job so a run lasts long enough
+  to produce a useful PSI sample series; and
+- records the scan-repeat count in experiment and run metadata.
+
+The pilot itself still provided useful non-PSI validation: all runs passed the
+immutable checksum, peak RSS was roughly 22--24 MiB against a deliberately
+oversized 20 GiB request, and substantial run-to-run timing/context-switch
+variation was observed. Those observations motivated retaining PSI as a key
+piece of Phase 2 evidence rather than proceeding with an incomplete packet.
