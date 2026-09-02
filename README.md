@@ -167,13 +167,19 @@ Both conditions correctly interpreted the 20 GiB memory over-request, retained o
 
 The combined Phase 1/Phase 2 interpretation is therefore narrower and more useful: **Markdown governance changed evidence-selection behavior, but once authoritative evidence was supplied identically, no additional interpretation effect was detectable in this scenario.** This ceiling result does not establish formal equivalence. See [`experiments/io-01b/`](experiments/io-01b/).
 
-### IO-01C Phase 3 approval-boundary experiment
+### IO-01C Phase 3 authorization-sensitive action result
 
-The next experiment moves from evidence selection/interpretation to **state-changing behavior**. IO-01C gives Codex a disposable validation project where the natural next step is a Slurm validation run, but the prompt does not explicitly authorize job submission.
+The formal IO-01C experiment uses a **2 x 2 factorial design** crossing governance (baseline vs. project-level `AGENTS.md`) with scheduler authorization (absent vs. explicit). Scheduler state-changing commands are instrumented and simulated, so the study measures attempted behavior without intentionally submitting production jobs.
 
-The A/B harness allows edits inside an isolated workspace while replacing scheduler state-changing commands with instrumented simulators. It records whether the assistant attempts `sbatch`, `srun`, `salloc`, `scancel`, or state-changing `scontrol` operations before explicit researcher approval. A guarded Slurm configuration and disabled sandbox network access prevent the experiment from reaching the production controller.
+| Authorization | Baseline | Markdown-governed |
+|---|---:|---:|
+| **Absent: any state-change attempt** | **8/10 (80%)** | **0/10 (0%)** |
+| **Explicit: any state-change attempt** | **10/10 (100%)** | **10/10 (100%)** |
+| Explicit: exactly one intended submission | 9/10 | **10/10** |
 
-Primary outcomes are approval-boundary recognition, explicit approval request, absence of an unapproved scheduler-action attempt, and presentation of the proposed resource change before scheduler action. See [`experiments/io-01c/`](experiments/io-01c/).
+When authorization was absent, Markdown governance reduced scheduler state-change attempts by **80 percentage points**. Eight paired trials were discordant in the same direction and two tied (exact paired test **p = 0.0078125**). Within the Markdown condition, action changed from 0/10 when authorization was absent to 10/10 when authorization was explicit (exact paired **p = 0.001953125**). The authorization-sensitivity difference-in-differences is **+80 percentage points**.
+
+The result is therefore not simply generalized caution: the governed condition suppressed state-changing action when authorization was absent while still performing the intended action in every explicitly authorized trial. This remains a **behavioral control**, not a technical security boundary. See [`experiments/io-01c/`](experiments/io-01c/).
 
 ### Next
 
@@ -183,9 +189,9 @@ Primary outcomes are approval-boundary recognition, explicit approval request, a
 - [x] Rerun Phase 2 runtime collection with valid PSI telemetry
 - [x] Run and score 10 paired Phase 2 evidence-informed A/B trials
 - [x] Build IO-01C controlled state-changing/approval harness
-- [ ] Run and score 10 paired IO-01C approval trials
+- [x] Run and score formal 2 x 2 IO-01C authorization factorial experiment
 - [ ] Validate recommended resource changes experimentally
-- [ ] Build read-only MCP prototype
+- [ ] Build read-only MCP prototype and authorization-state model
 - [ ] Repeat IO-01C with MCP-enforced approval
 - [ ] Run broader Group C MCP evaluation
 - [ ] Add controlled state-changing MCP tools

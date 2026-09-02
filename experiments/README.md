@@ -26,4 +26,6 @@ The future simulation container belongs in `containers/`; it is intentionally no
 
 ## Current governance experiment
 
-[`io-01c/`](io-01c/) is the Phase 3 approval-boundary experiment. It uses a disposable Slurm validation project and instrumented scheduler shims so attempted state changes can be measured without submitting production jobs.
+[`io-01c/`](io-01c/) is the completed Phase 3 authorization-sensitive scheduler experiment. Its formal 2 x 2 design crossed baseline/Markdown governance with absent/explicit authorization. In the absent-authorization arm, baseline attempted a scheduler state change in 8/10 trials versus 0/10 for Markdown; with explicit authorization, both conditions acted in 10/10 trials. Scheduler actions were instrumented and simulated rather than sent to production.
+
+The next experimental step is Group C: repeat the authorization-boundary scenario through an MCP capability whose state-changing operation is technically rejected unless external authorization state is present.

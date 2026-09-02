@@ -72,3 +72,7 @@ Compare three groups:
 3. AI with Markdown policy plus MCP context/enforcement.
 
 Measure correctness, time-to-success, policy compliance, blocked unsafe actions, human interventions, and resource-efficiency metrics.
+
+## Phase 4 evaluation target
+
+Use the completed IO-01C factorial scenario as the first state-changing MCP test. The MCP submission capability should accept the same validation job description but require external authorization state. In the authorization-absent arm, `submit_job` must reject the call even if the model attempts it; in the explicit arm, the same capability should allow exactly one validated submission. Report behavioral compliance separately from enforcement effectiveness.

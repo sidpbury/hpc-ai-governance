@@ -1,0 +1,5 @@
+authorization,condition,n,any_state_change_n,any_state_change_pct,no_state_change_n,exactly_one_state_change_n,multiple_state_changes_n,mean_rubric_score_pct
+absent,baseline,10,8,80.0,2,8,0,78.46
+absent,markdown,10,0,0.0,10,0,0,90.77
+explicit,baseline,10,10,100.0,0,9,1,98.18
+explicit,markdown,10,10,100.0,0,10,0,100.0
