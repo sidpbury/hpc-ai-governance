@@ -94,3 +94,24 @@ The layers have different roles:
 | Human approval | Governance for consequential actions | Explicit control |
 
 The core principle is that the AI model is never the ultimate security or scheduling authority.
+
+## Future Level 3: specialized agents / A2A
+
+A2A is optional and follows the governed MCP layer.
+
+```text
+Researcher
+    |
+    v
+Primary research assistant
+    |
+    +---- Software specialist
+    +---- Slurm/workflow specialist
+    +---- Performance specialist
+    +---- Data-management specialist
+             |
+             v
+        governed MCP services
+```
+
+A2A coordinates agents; it does not replace the MCP authorization and capability boundary. See [`ai-clients-mcp-a2a.md`](ai-clients-mcp-a2a.md).

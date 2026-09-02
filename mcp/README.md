@@ -1,6 +1,6 @@
 # MCP System Layer
 
-This directory is reserved for the institution-governed MCP implementation.
+This directory contains the design for the institution-governed MCP implementation.
 
 ## Design goals
 
@@ -8,7 +8,7 @@ This directory is reserved for the institution-governed MCP implementation.
 - authenticate the requesting researcher;
 - apply the researcher's existing authorization;
 - validate all tool parameters;
-- expose only narrowly-scoped HPC capabilities;
+- expose only narrowly scoped HPC capabilities;
 - log state-changing requests;
 - require explicit approval for consequential operations;
 - preserve Slurm/Linux/storage policy as authoritative.
@@ -50,6 +50,13 @@ cancel_job(job_id, approval)
 
 State-changing functionality is intentionally outside the initial implementation scope.
 
-## Implementation note
+## MCP and A2A
 
-Production institutional documentation will be developed after the user-level experiment and read-only MCP prototype are sufficiently stable.
+MCP and A2A solve different problems:
+
+- **MCP:** agent → tools/data/capabilities.
+- **A2A:** agent → agent coordination.
+
+The initial architecture requires MCP but does not require A2A. Multi-agent/A2A work is a later phase after the institutional capability boundary is stable and measurable.
+
+See [`roadmap.md`](roadmap.md) and [`../docs/ai-clients-mcp-a2a.md`](../docs/ai-clients-mcp-a2a.md).

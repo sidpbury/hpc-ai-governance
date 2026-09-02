@@ -1,72 +1,68 @@
 # HPC AI Governance
 
-A research-computing project for evaluating and deploying AI assistance in high-performance computing (HPC) through two complementary governance layers:
+A research-computing project for evaluating and deploying AI assistance in high-performance computing (HPC) through progressive governance and evidence-based integration.
 
-1. **User-governed AI** — project/site Markdown instruction files that teach general-purpose AI coding assistants how to behave in an HPC environment.
-2. **Institution-governed AI** — a Model Context Protocol (MCP) service that exposes narrow, authenticated HPC capabilities and enforces policy outside the model.
+The project now covers three stages:
 
-The project treats Slurm, Linux permissions, allocation policy, and institutional controls as authoritative. AI provides assistance, context, diagnostics, and eventually controlled orchestration.
+1. **User-governed AI** — project/site Markdown instruction files for Claude Code, Codex, Gemini CLI, and GitHub Copilot.
+2. **Institution-governed AI** — a narrow, authenticated Model Context Protocol (MCP) service exposing HPC context, telemetry, validation, and later controlled actions.
+3. **Future multi-agent integration** — optional A2A coordination between specialized research-computing agents after the MCP boundary is mature.
+
+Slurm, Linux permissions, allocation/account policy, storage ACLs, identity, and institutional security controls remain authoritative.
 
 ## Project hypothesis
 
 A progressive integration model can improve HPC usability and resource efficiency while preserving governance:
 
-**Baseline AI → Markdown-governed AI → MCP-governed AI + telemetry**
+**Baseline AI → Markdown-governed AI → MCP-governed AI + telemetry → optional A2A specialization**
 
-The evaluation is designed to measure both researcher outcomes and system behavior, including:
+The evaluation measures:
 
-- Slurm script correctness
-- time to successful execution
-- policy compliance
-- blocked unsafe actions
-- CPU and memory efficiency
-- GPU utilization and GPU memory efficiency
-- CPU, memory, and I/O Pressure Stall Information (PSI)
-- failed submissions and human interventions
+- Slurm correctness;
+- time to successful execution;
+- policy compliance;
+- blocked unsafe actions;
+- CPU and memory efficiency;
+- GPU utilization and GPU memory efficiency;
+- CPU, memory, and I/O Pressure Stall Information (PSI);
+- failed submissions and human interventions.
 
 ## Repository layout
 
 ```text
 hpc-ai-governance/
 ├── README.md
-├── CITATION.cff
-├── CONTRIBUTING.md
-├── SECURITY.md
-├── Makefile
 ├── paper/
-│   ├── ai_hpc_agentic_workflows.tex
-│   └── ai_hpc_agentic_workflows.pdf
 ├── proposals/
-│   └── greenbelt_ai_hpc_workflow_proposal.md
 ├── docs/
 │   ├── user-guide.md
 │   ├── architecture.md
-│   └── evaluation.md
+│   ├── evaluation.md
+│   └── ai-clients-mcp-a2a.md
 ├── policy/
 │   ├── HPC-AI-INSTRUCTIONS.md
 │   └── clients/
-│       ├── claude/CLAUDE.md
-│       ├── codex/AGENTS.md
-│       ├── gemini/GEMINI.md
-│       └── copilot/copilot-instructions.md
 ├── scripts/
-│   └── install-policy.sh
+│   ├── install-policy.sh
+│   └── run_io01b_replicates.sh
 ├── experiments/
-│   ├── README.md
 │   ├── benchmark-plan.md
 │   ├── metrics-schema.csv
-│   └── scenarios/
+│   ├── scenarios/
+│   └── io-01b/
+│       ├── README.md
+│       ├── formal-results-summary.md
+│       └── formal-scorecard-scored.csv
 ├── mcp/
-│   └── README.md
+│   ├── README.md
+│   └── roadmap.md
 ├── containers/
-│   └── README.md
 └── institutional/
-    └── README.md
 ```
 
-## Quick start: user-level approach
+## User-level AI clients
 
-Copy the canonical policy into your research project using the filename expected by your AI tool:
+The canonical policy is `policy/HPC-AI-INSTRUCTIONS.md`.
 
 ```bash
 # Claude Code
@@ -89,11 +85,11 @@ Or use:
 ./scripts/install-policy.sh claude /path/to/project
 ```
 
-The Markdown policy is a **behavioral guardrail**, not a security boundary. Researchers should review proposed commands and Slurm submissions before execution.
+Markdown policy is a **behavioral guardrail**, not a security boundary.
 
-## System-level approach
+## MCP and A2A
 
-The planned MCP layer will expose purpose-built HPC tools rather than arbitrary shell execution. Example capabilities include:
+The institution-governed MCP layer exposes narrow tools such as:
 
 ```text
 documentation_search()
@@ -106,55 +102,59 @@ psi_cpu()
 psi_memory()
 psi_io()
 validate_job()
-submit_job()
 ```
 
-Read-only capabilities are the intended first deployment. State-changing operations should require explicit user approval and server-side authorization.
+Read-only capabilities come first. State-changing operations such as `submit_job()` and `cancel_job()` require server-side authorization, validation, audit logging, and explicit human approval.
 
-See [`mcp/README.md`](mcp/README.md).
+A2A is complementary and later-stage:
 
-## Performance evidence
+> **MCP connects agents to capabilities. A2A connects agents to other agents.**
 
-The project uses three categories of operational evidence:
+See [`docs/ai-clients-mcp-a2a.md`](docs/ai-clients-mcp-a2a.md) and [`mcp/roadmap.md`](mcp/roadmap.md).
 
-### Scheduler accounting
-Requested resources, elapsed time, CPU use, memory use, job state, and exit status.
+## Experimental status
 
-### GPU telemetry
-GPU compute utilization, GPU memory use, power/throttling indicators, and related accelerator measurements when available.
-
-### Linux PSI
-CPU, memory, and I/O stall pressure, including `avg10`, `avg60`, `avg300`, `some`, `full` where applicable, and cumulative stall time.
-
-See [`docs/evaluation.md`](docs/evaluation.md) and [`experiments/benchmark-plan.md`](experiments/benchmark-plan.md).
-
-## Current status
+### Completed
 
 - [x] Journal-paper architecture and literature review
 - [x] Green Belt/DMAIC proposal
-- [x] User-level Markdown policy
+- [x] Canonical HPC Markdown policy
 - [x] Researcher user guide
 - [x] Initial benchmark design
-- [ ] Baseline experiment execution
-- [ ] User-governed experiment execution
-- [ ] Read-only MCP prototype
-- [ ] MCP-governed experiment execution
-- [ ] Institutional operations documentation
-- [ ] Simulation/benchmark container
-- [ ] Controlled state-changing MCP tools
-- [ ] Multi-agent/A2A experiments
+- [x] IO-01 pilot harness validation
+- [x] IO-01B blinded formal A/B pair
+- [x] Formal scoring rubric
+- [x] 10-pair static replication harness
 
-## Important scope boundary
+### First formal IO-01B pair
 
-This repository currently documents and evaluates the **researcher-facing Markdown approach** and the design of the **institutional MCP approach**.
+| Measure | Baseline | Markdown-governed |
+|---|---:|---:|
+| Testable criteria passed | 13/17 | 16/17 |
+| Raw score | 76.5% | 94.1% |
+| Raw difference | — | +17.6 points |
 
-Production institutional operating procedures and the benchmark simulation container are intentionally deferred to later phases.
+The raw gain was concentrated in explicit CPU, memory, and I/O PSI coverage. Generic HPC diagnosis was strong in both conditions, so this is preliminary evidence rather than a broad claim of overall AI improvement. See [`experiments/io-01b/`](experiments/io-01b/).
+
+Run the replication harness with:
+
+```bash
+./scripts/run_io01b_replicates.sh 10
+```
+
+### Next
+
+- [ ] Complete and score 10 paired IO-01B static replications
+- [ ] Run evidence-informed A/B phase with identical Slurm + PSI evidence
+- [ ] Validate recommended resource changes experimentally
+- [ ] Build read-only MCP prototype
+- [ ] Run Group C MCP evaluation
+- [ ] Add controlled state-changing MCP tools
+- [ ] Evaluate specialized-agent/A2A designs only after MCP is stable
 
 ## Paper
 
-The current manuscript is under [`paper/`](paper/).
-
-Build it with:
+The manuscript is under [`paper/`](paper/).
 
 ```bash
 make paper
@@ -162,7 +162,7 @@ make paper
 
 ## Green Belt project
 
-The DMAIC project proposal is under [`proposals/`](proposals/). It uses the three-condition experimental design:
+The DMAIC proposal under [`proposals/`](proposals/) uses the three-condition design:
 
 - **A — Baseline AI**
 - **B — User-governed AI with Markdown instructions**

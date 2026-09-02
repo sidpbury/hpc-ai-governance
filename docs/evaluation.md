@@ -86,3 +86,18 @@ A key distinction is:
 **Instruction compliance** measures whether the model follows the Markdown policy.
 
 **Enforcement effectiveness** measures whether system controls prevent violations even when the model does not follow policy.
+
+## IO-01B formal benchmark status
+
+A blinded formal A/B pair has been completed for the Markdown layer.
+
+| Measure | Baseline | Markdown-governed |
+|---|---:|---:|
+| Testable criteria passed | 13/17 | 16/17 |
+| Raw score | 76.5% | 94.1% |
+
+The raw difference was driven by explicit CPU, memory, and I/O PSI coverage in the governed response. Basic HPC diagnosis was strong in both conditions. This result is therefore treated as preliminary evidence, not as a general effect estimate.
+
+A 10-pair replication harness is included at `scripts/run_io01b_replicates.sh`. It alternates condition order and creates fresh blinded workspaces and Git roots for each trial.
+
+After replication, the planned evidence-informed phase will provide identical Slurm accounting and PSI evidence to fresh baseline and governed sessions, followed by controlled validation of the recommendations.
