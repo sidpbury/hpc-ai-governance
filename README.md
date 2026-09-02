@@ -59,6 +59,9 @@ hpc-ai-governance/
 │       ├── replication-results-summary.md
 │       ├── replication-scorecard-scored.csv
 │       ├── replication-criterion-summary.csv
+│       ├── phase2-evidence-replication-results-summary.md
+│       ├── phase2-evidence-replication-scorecard-scored.csv
+│       ├── phase2-evidence-replication-criterion-summary.csv
 │       └── runtime/
 ├── mcp/
 │   ├── README.md
@@ -149,13 +152,29 @@ The repeatable effect is concentrated in the site-selected telemetry layer: CPU 
 
 Because the three PSI rows represent one correlated policy concept, the conservative composite analysis is **86.7% baseline vs. 93.3% governed (+6.7 points)**. See [`experiments/io-01b/`](experiments/io-01b/).
 
+### IO-01B Phase 2 evidence-interpretation result
+
+Ten fresh paired evidence-analysis trials supplied the **same corrected Slurm, timing, correctness, and PSI evidence** to both conditions. The result was a ceiling-level tie:
+
+| Measure | Baseline | Markdown-governed |
+|---|---:|---:|
+| Paired trials | 10 | 10 |
+| Mean passed criteria | 18.0/18 | 18.0/18 |
+| Mean score | 100.0% | 100.0% |
+| Pairwise result | 10 ties | 10 ties |
+
+Both conditions correctly interpreted the 20 GiB memory over-request, retained one CPU, rejected GPU use, recognized the warm/page-cache limitation, distinguished logical throughput from physical Ceph bandwidth, and treated node-level CPU PSI cautiously.
+
+The combined Phase 1/Phase 2 interpretation is therefore narrower and more useful: **Markdown governance changed evidence-selection behavior, but once authoritative evidence was supplied identically, no additional interpretation effect was detectable in this scenario.** This ceiling result does not establish formal equivalence. See [`experiments/io-01b/`](experiments/io-01b/).
+
 ### Next
 
 - [x] Complete and score 10 paired IO-01B static replications
 - [x] Run initial Phase 2 researcher-controlled runtime pilot
 - [x] Correct PSI schema and site `sacct` field compatibility found by pilot
 - [x] Rerun Phase 2 runtime collection with valid PSI telemetry
-- [ ] Run Phase 2 evidence-informed A/B with identical Slurm + PSI evidence
+- [x] Run and score 10 paired Phase 2 evidence-informed A/B trials
+- [ ] Run controlled state-changing/approval experiment
 - [ ] Validate recommended resource changes experimentally
 - [ ] Build read-only MCP prototype
 - [ ] Run Group C MCP evaluation

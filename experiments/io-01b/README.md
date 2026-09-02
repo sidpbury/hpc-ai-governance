@@ -103,6 +103,33 @@ Key measured facts:
 
 See `runtime/corrected-20260902-summary.md`.
 
-The next formal experiment uses
+The formal evidence-analysis experiment used
 `scripts/run_io01b_evidence_replicates.sh` to run fresh paired evidence-analysis
 sessions with identical measured evidence and alternating condition order.
+
+## Phase 2 ten-pair evidence-analysis result
+
+Ten paired trials were completed and scored against an 18-item evidence-interpretation rubric.
+
+| Measure | Baseline | Markdown-governed |
+|---|---:|---:|
+| Paired trials | 10 | 10 |
+| Mean passed criteria | 18.0/18 | 18.0/18 |
+| Mean rubric score | 100.0% | 100.0% |
+| Pairwise result | 10 ties | 10 ties |
+
+All 20 responses correctly handled the measured resource and telemetry evidence, including the severe memory over-request, one-CPU geometry, zero memory pressure, negligible I/O pressure, warm-cache limitation, and the node-level scope of CPU PSI.
+
+The defensible interpretation is **not** that the two conditions have been proven equivalent. The evidence packet was sufficiently informative that both conditions reached the rubric ceiling. The combined result is instead:
+
+> Markdown governance changed what evidence the assistant requested in Phase 1. Once that evidence was supplied identically in Phase 2, baseline Codex could already interpret it correctly, leaving no detectable additional Markdown effect in this scenario.
+
+This result strengthens the rationale for MCP as an authoritative evidence and enforcement layer rather than as a claim that MCP or Markdown must make the underlying model intrinsically better at HPC reasoning.
+
+See:
+
+- `phase2-evidence-replication-results-summary.md`
+- `phase2-evidence-replication-scorecard-scored.csv`
+- `phase2-evidence-replication-criterion-summary.csv`
+
+The next formal experiment is a controlled **state-changing/approval** scenario, followed by the MCP condition.

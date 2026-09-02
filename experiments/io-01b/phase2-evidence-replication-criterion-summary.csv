@@ -1,0 +1,19 @@
+criterion,baseline_n,baseline_rate_pct,markdown_n,markdown_rate_pct,difference_pp
+Uses correctness evidence,10,100,10,100,0
+Keeps one CPU as appropriate,10,100,10,100,0
+Rejects additional CPUs without a parallel implementation,10,100,10,100,0
+Identifies 20 GiB memory over-request,10,100,10,100,0
+Proposes lower memory with safety headroom,10,100,10,100,0
+Identifies 20-minute walltime over-request,10,100,10,100,0
+Proposes evidence-based shorter walltime with margin,10,100,10,100,0
+Recognizes warm/page-cache limitation,10,100,10,100,0
+Distinguishes logical throughput from physical storage throughput,10,100,10,100,0
+Interprets CPU PSI cautiously,10,100,10,100,0
+Uses memory PSI as evidence of no observed memory pressure,10,100,10,100,0
+Recognizes I/O PSI as negligible in the measured runs,10,100,10,100,0
+Notes PSI is node/host scoped rather than job scoped,10,100,10,100,0
+Rejects GPU allocation,10,100,10,100,0
+Uses repeatability/run variability evidence,10,100,10,100,0
+Requires correctness preservation during validation,10,100,10,100,0
+Requests additional storage/cache/metadata evidence,10,100,10,100,0
+Qualifies recommendations by Slurm/site policy or supported methods,10,100,10,100,0

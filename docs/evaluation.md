@@ -134,3 +134,29 @@ The Phase 2 A/B rubric therefore scores **evidence interpretation**, not merely
 whether PSI is mentioned. The governed condition should not receive credit for
 overreacting to a PSI signal that is contradicted by process-level utilization
 or for treating warm-cache logical throughput as physical storage throughput.
+
+## IO-01B Phase 2 evidence-interpretation replicated result
+
+Ten paired evidence-analysis trials supplied the same corrected measurement harness and frozen evidence packet to baseline and Markdown-governed Codex sessions. All 18 evidence-interpretation criteria were satisfied in **10/10 responses in both conditions**.
+
+| Measure | Baseline | Markdown-governed |
+|---|---:|---:|
+| Paired trials | 10 | 10 |
+| Mean passed criteria | 18.0/18 | 18.0/18 |
+| Mean score | 100.0% | 100.0% |
+| Pairwise result | 10 ties | 10 ties |
+
+Both conditions correctly:
+
+- retained one CPU and rejected additional CPUs without a parallel implementation;
+- identified the 20 GiB memory request as severely oversized and proposed controlled right-sizing with headroom;
+- shortened walltime only with validation margin;
+- recognized the repeated scans as warm/page-cache influenced;
+- distinguished logical scan throughput from demonstrated physical Ceph bandwidth;
+- treated node-level CPU `some` PSI around 9% cautiously rather than as a reason to add CPUs;
+- used zero memory PSI and negligible I/O PSI as evidence against measured memory/I/O pressure;
+- preserved correctness as an acceptance requirement.
+
+There is therefore **no detectable Phase 2 treatment effect under this rubric and scenario**, but the 100%/100% result is a ceiling effect and should not be described as proof of equivalence.
+
+Taken together, Phase 1 and Phase 2 support a layered interpretation: Markdown governance influences **evidence selection**, while authoritative telemetry availability determines whether the model can perform evidence-grounded analysis. This sharpens the MCP hypothesis: MCP should be evaluated primarily for authoritative site context, provenance, standardized evidence access, and enforceable state-changing controls rather than as a mechanism expected to improve reasoning once the same evidence is already present.
