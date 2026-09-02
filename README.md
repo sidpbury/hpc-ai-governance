@@ -46,7 +46,8 @@ hpc-ai-governance/
 │   ├── install-policy.sh
 │   ├── run_io01b_replicates.sh
 │   ├── submit_io01b_runtime.sh
-│   └── collect_io01b_evidence.sh
+│   ├── collect_io01b_evidence.sh
+│   └── run_io01b_evidence_replicates.sh
 ├── experiments/
 │   ├── benchmark-plan.md
 │   ├── metrics-schema.csv
@@ -153,7 +154,7 @@ Because the three PSI rows represent one correlated policy concept, the conserva
 - [x] Complete and score 10 paired IO-01B static replications
 - [x] Run initial Phase 2 researcher-controlled runtime pilot
 - [x] Correct PSI schema and site `sacct` field compatibility found by pilot
-- [ ] Rerun Phase 2 runtime collection with valid PSI telemetry
+- [x] Rerun Phase 2 runtime collection with valid PSI telemetry
 - [ ] Run Phase 2 evidence-informed A/B with identical Slurm + PSI evidence
 - [ ] Validate recommended resource changes experimentally
 - [ ] Build read-only MCP prototype

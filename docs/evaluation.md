@@ -109,3 +109,28 @@ Generic HPC diagnosis was near ceiling in both conditions. Therefore the primary
 The three PSI rows are correlated. A conservative sensitivity analysis collapses them into one PSI-evidence criterion, yielding 86.7% baseline vs. 93.3% governed (+6.7 percentage points).
 
 The next evidence-informed phase uses the researcher-controlled harness under `experiments/io-01b/runtime/`. It provides identical measured Slurm accounting, `/usr/bin/time -v`, correctness, and PSI evidence to fresh baseline and governed sessions. State-changing approval behavior remains a separate later experiment.
+
+
+## IO-01B Phase 2 corrected measured evidence
+
+The corrected researcher-controlled runtime collection completed five valid
+measurement jobs. All checksum validations passed and all PSI files contain
+valid samples.
+
+The evidence deliberately creates several interpretation targets:
+
+- **Memory:** 20 GiB requested versus roughly 21 MiB peak process RSS.
+- **CPU:** one CPU is already saturated at 99% process CPU.
+- **CPU PSI:** node-level `some` pressure is about 9%, while CPU `full` is zero.
+  Because the sampler reads `/proc/pressure`, this signal is not uniquely
+  attributable to the benchmark process.
+- **Memory PSI:** zero.
+- **I/O PSI:** effectively zero.
+- **Storage interpretation:** repeated scans report zero filesystem inputs, so
+  logical scan throughput must not be presented as clean physical Ceph
+  bandwidth.
+
+The Phase 2 A/B rubric therefore scores **evidence interpretation**, not merely
+whether PSI is mentioned. The governed condition should not receive credit for
+overreacting to a PSI signal that is contradicted by process-level utilization
+or for treating warm-cache logical throughput as physical storage throughput.

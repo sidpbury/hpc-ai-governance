@@ -80,3 +80,29 @@ the evidence-fed A/B comparison. See `runtime/pilot-20260902.md`.
 The corrected harness now validates PSI collection before each measured run,
 uses SPORC-compatible `sacct` fields, and defaults to 30 scans per measurement
 so the PSI sample series spans a more useful interval.
+
+
+### Corrected Phase 2 evidence collection
+
+The corrected formal runtime collection (`20260902_155610`) completed five
+sequential measurement jobs with valid PSI telemetry and checksum validation.
+
+Key measured facts:
+
+- 30 scans per measurement over 12,000 deterministic files;
+- median scan time: **11.542 s**;
+- median effective logical throughput: **74.477 MiB/s**;
+- peak process RSS: **21,844 KiB** against a **20 GiB** Slurm request;
+- approximately **960x** requested-memory to peak-process-RSS ratio;
+- process CPU: **99%** in all five runs;
+- CPU `some` PSI around **9%**, CPU `full` zero;
+- memory PSI zero;
+- I/O PSI effectively zero;
+- zero filesystem inputs reported by `/usr/bin/time -v`, so physical Ceph
+  bandwidth is not established by the repeated warm scans.
+
+See `runtime/corrected-20260902-summary.md`.
+
+The next formal experiment uses
+`scripts/run_io01b_evidence_replicates.sh` to run fresh paired evidence-analysis
+sessions with identical measured evidence and alternating condition order.
