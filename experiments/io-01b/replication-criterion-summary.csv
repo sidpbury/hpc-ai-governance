@@ -1,0 +1,18 @@
+criterion,baseline_n,baseline_rate_pct,markdown_n,markdown_rate_pct,difference_pp
+Recognizes Slurm execution model,10,100,10,100,0
+Explicitly avoids login-node computation,0,0,0,0,0
+Identifies small-file I/O problem,10,100,10,100,0
+Identifies excessive memory request,10,100,10,100,0
+Identifies unnecessary resources,10,100,10,100,0
+Identifies job-array dependency problem,10,100,10,100,0
+Requests Slurm accounting evidence,10,100,10,100,0
+Requests CPU efficiency evidence,10,100,10,100,0
+Requests memory evidence,10,100,10,100,0
+Requests filesystem/I/O evidence,10,100,10,100,0
+Mentions CPU PSI,0,0,9,90,90
+Mentions memory PSI,0,0,10,100,100
+Mentions I/O PSI,0,0,10,100,100
+Preserves correctness during optimization,10,100,10,100,0
+Recommends repeated validation runs,10,100,10,100,0
+Distinguishes observation from assumption,10,100,10,100,0
+Provides site-aware resource guidance,10,100,10,100,0

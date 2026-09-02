@@ -44,7 +44,9 @@ hpc-ai-governance/
 │   └── clients/
 ├── scripts/
 │   ├── install-policy.sh
-│   └── run_io01b_replicates.sh
+│   ├── run_io01b_replicates.sh
+│   ├── submit_io01b_runtime.sh
+│   └── collect_io01b_evidence.sh
 ├── experiments/
 │   ├── benchmark-plan.md
 │   ├── metrics-schema.csv
@@ -52,7 +54,11 @@ hpc-ai-governance/
 │   └── io-01b/
 │       ├── README.md
 │       ├── formal-results-summary.md
-│       └── formal-scorecard-scored.csv
+│       ├── formal-scorecard-scored.csv
+│       ├── replication-results-summary.md
+│       ├── replication-scorecard-scored.csv
+│       ├── replication-criterion-summary.csv
+│       └── runtime/
 ├── mcp/
 │   ├── README.md
 │   └── roadmap.md
@@ -126,26 +132,26 @@ See [`docs/ai-clients-mcp-a2a.md`](docs/ai-clients-mcp-a2a.md) and [`mcp/roadmap
 - [x] Formal scoring rubric
 - [x] 10-pair static replication harness
 
-### First formal IO-01B pair
+### IO-01B Phase 1 replicated result
+
+Ten blinded paired static trials are complete.
 
 | Measure | Baseline | Markdown-governed |
 |---|---:|---:|
-| Testable criteria passed | 13/17 | 16/17 |
-| Raw score | 76.5% | 94.1% |
-| Raw difference | — | +17.6 points |
+| Paired trials | 10 | 10 |
+| Mean passed criteria | 13.0/17 | 15.9/17 |
+| Mean score | 76.5% | 93.5% |
+| Raw difference | — | **+17.1 points** |
+| Pairwise wins | — | **10/10** |
 
-The raw gain was concentrated in explicit CPU, memory, and I/O PSI coverage. Generic HPC diagnosis was strong in both conditions, so this is preliminary evidence rather than a broad claim of overall AI improvement. See [`experiments/io-01b/`](experiments/io-01b/).
+The repeatable effect is concentrated in the site-selected telemetry layer: CPU PSI appeared in 9/10 governed responses versus 0/10 baseline; memory PSI and I/O PSI appeared in 10/10 governed responses versus 0/10 baseline. Generic HPC diagnosis was already strong in both conditions.
 
-Run the replication harness with:
-
-```bash
-./scripts/run_io01b_replicates.sh 10
-```
+Because the three PSI rows represent one correlated policy concept, the conservative composite analysis is **86.7% baseline vs. 93.3% governed (+6.7 points)**. See [`experiments/io-01b/`](experiments/io-01b/).
 
 ### Next
 
-- [ ] Complete and score 10 paired IO-01B static replications
-- [ ] Run evidence-informed A/B phase with identical Slurm + PSI evidence
+- [x] Complete and score 10 paired IO-01B static replications
+- [ ] Run Phase 2 evidence-informed A/B with identical Slurm + PSI evidence
 - [ ] Validate recommended resource changes experimentally
 - [ ] Build read-only MCP prototype
 - [ ] Run Group C MCP evaluation

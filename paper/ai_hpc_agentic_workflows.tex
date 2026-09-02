@@ -911,6 +911,16 @@ Measurements could include:
 
 The comparison between Groups A and B measures the value of the user-level Markdown approach. The comparison between Groups B and C measures the additional value of authoritative site context, telemetry, and enforced MCP operations.
 
+\subsection{Initial IO-01B Markdown-Governance Results}
+
+The first completed experiment evaluates the user-level Markdown layer using a blinded small-file I/O workload. Ten paired static-analysis trials compared Codex without site-specific project instructions (Group A) against the same client, model, workload, and prompt with the HPC policy installed as \texttt{AGENTS.md} at the Git repository root (Group B). Trial order alternated between baseline-first and Markdown-first execution. No Slurm job was submitted and no workload was executed during this phase.
+
+Across the 17 testable rubric items, the baseline condition passed a mean of 13.0 criteria (76.5\%), while the Markdown-governed condition passed 15.9 (93.5\%). The governed response scored higher in all ten paired trials. However, generic HPC diagnosis was already near ceiling in both conditions: both consistently identified the small-file I/O bottleneck, excessive memory requests, invalid array dependencies, scheduler-accounting requirements, correctness validation, and repeated measurement needs.
+
+The repeatable difference was concentrated in institution-selected telemetry. CPU PSI was requested in 9 of 10 governed responses and 0 of 10 baseline responses; memory PSI and I/O PSI were each requested in 10 of 10 governed responses and 0 of 10 baseline responses. Because these three rubric rows represent one correlated policy concept, a conservative sensitivity analysis collapses them into a single PSI-evidence criterion. Under that analysis, the baseline score is 13/15 (86.7\%) and the governed score is 14/15 (93.3\%), a 6.7 percentage-point difference.
+
+These results support a deliberately narrow interpretation: project-level Markdown governance can reliably steer the same model toward institution-selected HPC evidence that it otherwise omits. The experiment does not establish that Markdown instructions make the underlying model generally more capable at HPC diagnosis, nor does it test enforcement. The next phase supplies identical measured Slurm accounting, correctness data, and PSI telemetry to fresh Group A and Group B sessions to evaluate evidence interpretation and resource right-sizing before introducing the MCP condition.
+
 \subsection{Resource Efficiency}
 
 Scheduler history can be used to determine whether AI recommendations improve resource requests over time.

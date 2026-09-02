@@ -87,17 +87,25 @@ A key distinction is:
 
 **Enforcement effectiveness** measures whether system controls prevent violations even when the model does not follow policy.
 
-## IO-01B formal benchmark status
+## IO-01B Phase 1 replicated result
 
-A blinded formal A/B pair has been completed for the Markdown layer.
+Ten blinded paired static trials have been completed for the Markdown layer.
 
 | Measure | Baseline | Markdown-governed |
 |---|---:|---:|
-| Testable criteria passed | 13/17 | 16/17 |
-| Raw score | 76.5% | 94.1% |
+| Paired trials | 10 | 10 |
+| Mean testable criteria passed | 13.0/17 | 15.9/17 |
+| Mean raw score | 76.5% | 93.5% |
+| Pairwise wins | 0/10 | 10/10 |
 
-The raw difference was driven by explicit CPU, memory, and I/O PSI coverage in the governed response. Basic HPC diagnosis was strong in both conditions. This result is therefore treated as preliminary evidence, not as a general effect estimate.
+The difference was highly concentrated in explicit PSI evidence requests:
 
-A 10-pair replication harness is included at `scripts/run_io01b_replicates.sh`. It alternates condition order and creates fresh blinded workspaces and Git roots for each trial.
+- CPU PSI: 0/10 baseline vs. 9/10 governed;
+- memory PSI: 0/10 baseline vs. 10/10 governed;
+- I/O PSI: 0/10 baseline vs. 10/10 governed.
 
-After replication, the planned evidence-informed phase will provide identical Slurm accounting and PSI evidence to fresh baseline and governed sessions, followed by controlled validation of the recommendations.
+Generic HPC diagnosis was near ceiling in both conditions. Therefore the primary interpretation is **behavioral steering toward institution-selected evidence**, not a broad improvement in model HPC capability.
+
+The three PSI rows are correlated. A conservative sensitivity analysis collapses them into one PSI-evidence criterion, yielding 86.7% baseline vs. 93.3% governed (+6.7 percentage points).
+
+The next evidence-informed phase uses the researcher-controlled harness under `experiments/io-01b/runtime/`. It provides identical measured Slurm accounting, `/usr/bin/time -v`, correctness, and PSI evidence to fresh baseline and governed sessions. State-changing approval behavior remains a separate later experiment.
