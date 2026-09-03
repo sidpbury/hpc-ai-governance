@@ -4,18 +4,57 @@
 
 Build a narrow, authenticated HPC MCP gateway that exposes useful institutional context while keeping Slurm, Linux permissions, identity, storage ACLs, and policy enforcement authoritative.
 
-## Phase 1: read-only prototype
+## Research prototype — implemented
 
-Target tools:
+The first local STDIO prototype is under `mcp/server/` and supports:
+
+```text
+authorization_status()
+validate_job(job_file)
+job_status(job_id)
+job_history()
+storage_usage(path)
+psi_metrics()
+submit_job(job_file, purpose)
+```
+
+This prototype is deliberately dependency-free and home-directory deployable. It is not a production scheduler gateway: `submit_job` makes a real server-side allow/deny decision but simulates the resulting Slurm job.
+
+## Phase 4 evaluation — IO-01D
+
+Repeat the completed IO-01C 2×2 authorization scenario with MCP enabled in all four cells:
+
+1. absent authorization + baseline;
+2. absent authorization + Markdown;
+3. explicit authorization + baseline;
+4. explicit authorization + Markdown.
+
+Required enforcement invariant:
+
+> `submit_job` must never return ALLOWED when external authorization is absent, regardless of what the model requests.
+
+The experiment separately records:
+
+- behavioral compliance;
+- MCP submit attempts;
+- server denials;
+- server allows;
+- direct scheduler bypass attempts;
+- successful unauthorized actions;
+- successful authorized actions.
+
+## Next: production-grade read-only gateway
+
+Expand/replace research simulators with authenticated site integrations:
 
 ```text
 documentation_search(query)
 software_find(query)
-job_status()
+job_status(job_id)
 job_history()
 job_details(job_id)
 job_logs(job_id)
-storage_usage()
+storage_usage(path)
 gpu_utilization(job_id)
 gpu_memory(job_id)
 psi_cpu(job_id)
@@ -26,14 +65,14 @@ pressure_summary(job_id)
 
 Requirements:
 
-- authenticate the researcher;
-- scope results to resources the researcher may access;
-- validate parameters;
-- log requests;
-- return structured errors;
-- do not provide arbitrary shell execution.
+- authenticated researcher identity;
+- results scoped to resources the researcher may access;
+- parameter validation;
+- durable audit logs;
+- structured errors;
+- no arbitrary shell execution.
 
-## Phase 2: advisory tools
+## Advisory tools
 
 ```text
 create_job_spec(request)
@@ -41,38 +80,19 @@ validate_job(job_spec)
 recommend_resources(job_id_or_workflow)
 ```
 
-Recommendations should reference evidence such as Slurm accounting, MaxRSS, CPU efficiency, GPU utilization, and PSI rather than relying only on model intuition.
+Recommendations should reference Slurm accounting, MaxRSS, CPU efficiency, GPU telemetry, and PSI rather than model intuition alone.
 
-## Phase 3: controlled actions
+## Controlled production actions
+
+Only after the read-only gateway and Phase 4 evaluation are stable:
 
 ```text
-submit_job(job_spec, approval)
-cancel_job(job_id, approval)
+submit_job(job_spec, authorization)
+cancel_job(job_id, authorization)
 ```
 
-State-changing operations require:
+Production state-changing operations require server-side identity and authorization, complete parameter validation, institutional allocation/account policy, durable audit logging, and no privilege escalation through the model.
 
-- server-side authorization;
-- explicit human approval;
-- complete parameter validation;
-- audit logging;
-- existing allocation/account policy;
-- no privilege escalation through the model.
+## A2A integration
 
-## Phase 4: A2A integration
-
-A2A is optional and comes after the MCP capability boundary is mature. Specialized software, scheduler, performance, or data-management agents can coordinate with one another, while each continues to use the same governed MCP services.
-
-## Evaluation
-
-Compare three groups:
-
-1. baseline AI without site-specific policy;
-2. AI with Markdown policy;
-3. AI with Markdown policy plus MCP context/enforcement.
-
-Measure correctness, time-to-success, policy compliance, blocked unsafe actions, human interventions, and resource-efficiency metrics.
-
-## Phase 4 evaluation target
-
-Use the completed IO-01C factorial scenario as the first state-changing MCP test. The MCP submission capability should accept the same validation job description but require external authorization state. In the authorization-absent arm, `submit_job` must reject the call even if the model attempts it; in the explicit arm, the same capability should allow exactly one validated submission. Report behavioral compliance separately from enforcement effectiveness.
+A2A is optional and comes after the MCP capability boundary is mature. Specialized software, scheduler, performance, or data-management agents can coordinate while each continues to use the same governed MCP services.

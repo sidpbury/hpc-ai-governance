@@ -47,7 +47,10 @@ hpc-ai-governance/
 │   ├── run_io01b_replicates.sh
 │   ├── submit_io01b_runtime.sh
 │   ├── collect_io01b_evidence.sh
-│   └── run_io01b_evidence_replicates.sh
+│   ├── run_io01b_evidence_replicates.sh
+│   ├── install_hpc_mcp.sh
+│   ├── smoke_test_hpc_mcp.sh
+│   └── run_io01d_mcp_replicates.sh
 ├── experiments/
 │   ├── benchmark-plan.md
 │   ├── metrics-schema.csv
@@ -65,7 +68,10 @@ hpc-ai-governance/
 │       └── runtime/
 ├── mcp/
 │   ├── README.md
-│   └── roadmap.md
+│   ├── roadmap.md
+│   └── server/
+│       ├── hpc_governance_mcp.py
+│       └── test_stdio_client.py
 ├── containers/
 └── institutional/
 ```
@@ -121,6 +127,25 @@ A2A is complementary and later-stage:
 > **MCP connects agents to capabilities. A2A connects agents to other agents.**
 
 See [`docs/ai-clients-mcp-a2a.md`](docs/ai-clients-mcp-a2a.md) and [`mcp/roadmap.md`](mcp/roadmap.md).
+
+## Phase 4 MCP prototype
+
+The first research MCP implementation is now under `mcp/server/`. It is a dependency-free local STDIO server with bounded read-only tools plus a simulated `submit_job` capability. The server makes its own allow/deny decision from external authorization state; Markdown instructions cannot override that decision.
+
+Install and smoke-test it with:
+
+```bash
+./scripts/install_hpc_mcp.sh
+./scripts/smoke_test_hpc_mcp.sh --codex
+```
+
+The formal IO-01D harness repeats the Phase 3 authorization factorial with the MCP boundary enabled:
+
+```bash
+./scripts/run_io01d_mcp_replicates.sh --trials 1
+```
+
+No IO-01D path intentionally contacts production Slurm; allowed submissions are simulated and audited.
 
 ## Experimental status
 
@@ -191,10 +216,12 @@ The result is therefore not simply generalized caution: the governed condition s
 - [x] Build IO-01C controlled state-changing/approval harness
 - [x] Run and score formal 2 x 2 IO-01C authorization factorial experiment
 - [ ] Validate recommended resource changes experimentally
-- [ ] Build read-only MCP prototype and authorization-state model
-- [ ] Repeat IO-01C with MCP-enforced approval
+- [x] Build local MCP prototype and authorization-state model
+- [x] Add simulated, server-authorized `submit_job` capability for Phase 4
+- [ ] Smoke-test Codex with the local MCP server on SPORC
+- [ ] Repeat IO-01C as IO-01D with MCP-enforced approval
 - [ ] Run broader Group C MCP evaluation
-- [ ] Add controlled state-changing MCP tools
+- [ ] Harden controlled state-changing MCP tools for institutional deployment
 - [ ] Evaluate specialized-agent/A2A designs only after MCP is stable
 
 ## Paper

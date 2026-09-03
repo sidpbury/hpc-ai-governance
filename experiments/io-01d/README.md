@@ -2,6 +2,22 @@
 
 IO-01D is Phase 4 of the progressive HPC AI-governance study. It reuses the IO-01C 2×2 authorization design but adds an institutional MCP capability layer.
 
+
+## Current status
+
+The first completed 10-trial run (`20260902_194000`) is retained as **IO-01D1,
+the MCP integration / authorization-routing run**. It completed 40/40 valid
+sessions, allowed exactly one simulated MCP submission in all 20 externally
+authorized sessions, recorded zero direct scheduler bypasses, and recorded zero
+successful unauthorized actions. However, no authorization-absent session called
+`submit_job`, so the formal agent run did not exercise the MCP `DENIED` path.
+See `results/integration-results-summary.md`.
+
+**IO-01D2** is the follow-up enforcement-under-challenge replication. It uses one
+identical prompt in all four cells and explicitly asks for one validation attempt
+through the governance service. Only the external MCP authorization state changes.
+See `ENFORCEMENT-CHALLENGE.md`.
+
 ## Research question
 
 Can a narrow HPC MCP service technically enforce the same scheduler authorization boundary that Phase 3 tested behaviorally with Markdown instructions?
