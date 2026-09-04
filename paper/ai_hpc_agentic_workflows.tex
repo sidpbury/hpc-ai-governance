@@ -1,1105 +1,196 @@
 
 \documentclass[11pt]{article}
 
-\usepackage[margin=1in]{geometry}
+\usepackage[margin=0.85in]{geometry}
 \usepackage{booktabs}
 \usepackage{array}
-\usepackage{tabularx}
 \usepackage{enumitem}
 \usepackage{amsmath}
-\usepackage{listings}
-\usepackage{xcolor}
+\usepackage{microtype}
 \usepackage{hyperref}
 \usepackage{url}
-\usepackage{microtype}
-\usepackage{tikz}
-\usetikzlibrary{arrows.meta,positioning,calc,fit}
-\usepackage{needspace}
-\usepackage[section]{placeins}
-\usepackage{etoolbox}
-\usepackage{float}
 
 \hypersetup{
     colorlinks=true,
     linkcolor=blue,
     citecolor=blue,
-    urlcolor=blue,
-    hypertexnames=false
+    urlcolor=blue
 }
 
-\lstset{
-    basicstyle=\ttfamily\small,
-    breaklines=true,
-    frame=single,
-    columns=fullflexible
-}
+\setlist{nosep,leftmargin=*}
+\setlength{\parskip}{0.35em}
+\setlength{\parindent}{0pt}
 
-
-% Journal-friendly pagination: avoid orphaned headings and stranded floats.
-\raggedbottom
-\widowpenalty=10000
-\clubpenalty=10000
-\displaywidowpenalty=10000
-\setcounter{topnumber}{2}
-\setcounter{bottomnumber}{1}
-\setcounter{totalnumber}{3}
-\renewcommand{\topfraction}{0.9}
-\renewcommand{\bottomfraction}{0.8}
-\renewcommand{\textfraction}{0.08}
-\renewcommand{\floatpagefraction}{0.8}
-\pretocmd{\section}{\FloatBarrier\Needspace{7\baselineskip}}{}{}
-\pretocmd{\subsection}{\Needspace{5\baselineskip}}{}{}
-\BeforeBeginEnvironment{lstlisting}{\Needspace{9\baselineskip}}
-
-% Reusable monochrome TikZ styles suitable for journal printing.
-\tikzset{
-  rcbox/.style={draw, rounded corners=2pt, align=center, inner sep=5pt,
-                minimum height=8mm, font=\small},
-  rccore/.style={rcbox, line width=0.8pt, fill=black!5},
-  rcsmall/.style={rcbox, font=\footnotesize, inner sep=4pt},
-  rcarrow/.style={-{Latex[length=2.2mm]}, line width=0.7pt}
-}
-
-\title{Integrating Agentic AI into High-Performance Computing Workflows:\\
-A Two-Level Architecture for User-Governed and Institution-Governed Research Computing}
-
+\title{Progressive Governance for Agentic AI in High-Performance Computing:\\
+From Markdown Steering to MCP Enforcement}
 \author{}
 \date{}
 
 \begin{document}
-
 \maketitle
 
 \begin{abstract}
-High-performance computing (HPC) systems provide essential computational resources for modern scientific research but continue to present substantial usability barriers. Researchers must understand workload schedulers, resource requests, software environments, accelerators, storage systems, containers, and site-specific policies before effectively using an HPC system. Large language models (LLMs) and agentic artificial intelligence provide an opportunity to reduce these barriers by translating researcher intent into HPC operations. Directly connecting autonomous AI agents to production HPC systems, however, introduces significant concerns involving authorization, command execution, resource consumption, reproducibility, security, and accountability.
+Large language model (LLM) agents can reduce the operational complexity of high-performance computing (HPC), but unrestricted shell or scheduler access creates unacceptable authorization and safety risks. We evaluate a progressive governance model that separates behavioral guidance from technical enforcement. The model begins with project-level Markdown instructions, adds measured HPC evidence, and culminates in a narrow Model Context Protocol (MCP) control plane for scheduler actions.
 
-This paper presents a two-level adoption architecture for integrating agentic AI into research computing while maintaining existing HPC schedulers, authentication systems, software management tools, and security controls as authoritative components. The first level is a user-governed approach in which researchers provide persistent HPC-specific guidance to general-purpose coding agents through project-level Markdown instruction files. This approach can be deployed immediately in a researcher's home or project directory and is intended to shape behavior rather than enforce authorization. The second level is an institution-governed approach in which a site-operated Model Context Protocol (MCP) gateway exposes narrowly defined, authenticated HPC capabilities such as documentation retrieval, software discovery, scheduler accounting, GPU utilization, Linux Pressure Stall Information (PSI), storage reporting, job validation, and controlled job submission. State-changing operations remain subject to external authorization and human approval.
+Using one Codex client/model configuration and a reproducible Slurm right-sizing scenario, we conducted four controlled phases. Markdown guidance reliably changed evidence-selection behavior: institution-selected Pressure Stall Information (PSI) appeared in all governed trials under a conservative composite metric and in none of the baseline trials. When identical measured evidence was supplied, both conditions reached the rubric ceiling, showing that the main Markdown effect was evidence selection rather than improved interpretation. In a 2$\times$2 authorization experiment, baseline sessions attempted scheduler state changes in 8/10 authorization-absent trials, while Markdown-governed sessions attempted none. Finally, under an identical action-challenge prompt, an MCP governance service denied all 20 unauthorized submission requests and allowed all 20 authorized requests exactly once, with zero direct scheduler bypass attempts.
 
-We describe both adoption levels, representative researcher workflows, security boundaries, an implementation strategy using Slurm, Spack, containers, and site documentation, and an evaluation methodology that compares baseline AI assistance, Markdown-governed AI assistance, and MCP-integrated AI assistance. Recent ACM, IEEE, and PEARC work has already demonstrated LLM-based HPC support, MCP-mediated scientific interfaces, agentic scheduler execution, and AI-assisted resource prediction; accordingly, the contribution of this work is not MCP or LLM--HPC connectivity alone. Instead, we focus on a progressive governance model that distinguishes behavioral guidance from enforceable institutional controls and evaluates the incremental value of each layer. The proposed approach provides a path from immediately deployable user-level AI assistance to institutionally controlled agentic HPC while preserving existing administrative and scheduling controls.
+The results support a layered design: Markdown can steer what an agent considers and whether it attempts an action; MCP can enforce whether that action is permitted to succeed.
 \end{abstract}
 
-\noindent\textbf{Keywords:}
-high-performance computing, HPC, large language models, artificial intelligence,
-AI agents, Model Context Protocol, MCP, Slurm, research computing,
-scientific workflows, resource optimization
+\textbf{Keywords:} high-performance computing, LLM agents, Model Context Protocol, Slurm, governance, authorization, Pressure Stall Information
 
 \section{Introduction}
 
-High-performance computing has become an important component of research across disciplines including engineering, computational science, artificial intelligence, data science, physics, chemistry, and the life sciences. While HPC systems provide substantial computational capability, effective use of those systems frequently requires researchers to understand concepts outside their primary scientific discipline. These include batch scheduling, CPU and memory allocation, accelerators, parallel computing, software environments, containers, storage architectures, and command-line Linux environments.
+HPC systems remain difficult to use effectively because researchers must reason about schedulers, resource requests, software environments, accelerators, storage, and site policy in addition to their scientific work. LLM-based agents can help translate researcher intent into HPC operations, but simply giving an agent shell or scheduler access transfers too much operational authority to the model.
 
-Research computing organizations address this problem through documentation, training, consultations, and direct researcher support. Nevertheless, researchers routinely encounter questions such as how much memory a job requires, which GPU should be requested, which software environment contains a particular package, why a Slurm job failed, or why a program performs poorly. Solving these problems frequently requires combining information from several sources, including source code, job scripts, scheduler accounting records, application logs, site documentation, software repositories, and performance monitoring systems.
+This work studies a narrower question: \emph{how should an institution progressively govern an AI agent as it moves from advice to action?} We separate two mechanisms:
 
-Recent advances in large language models create an opportunity to provide a natural-language interface across these otherwise separate information sources. LLM-based agents extend this capability by allowing a model to invoke external tools rather than relying exclusively on information contained in its training data. The research landscape is developing rapidly: LLM-based systems have been evaluated for HPC user support \cite{llmsupport2026,hpcchatbot2025}, scientific APIs have been exposed through MCP \cite{openbridge2025}, HPC-native agents have been connected to Slurm execution \cite{biocodex2026}, multi-agent systems have been proposed for HPC administration and software deployment \cite{comashpc2025,hpcsoftwareagents2025}, and AI-based systems have been used for resource prediction and scheduling \cite{harp2023,semanticallocation2026}. These results establish the feasibility of AI-assisted HPC interaction but leave open the institutional question of how authority should be introduced progressively and measured.
+\begin{itemize}
+    \item \textbf{Behavioral governance:} project-level Markdown instructions such as \texttt{AGENTS.md} steer the model toward site practices, evidence, and approval requirements.
+    \item \textbf{Technical governance:} a site-operated MCP service exposes constrained capabilities and independently authorizes state-changing actions.
+\end{itemize}
 
-Simply providing an AI agent with shell access to an HPC login node, however, is not an appropriate production architecture. An AI system capable of executing arbitrary commands could inadvertently modify data, consume excessive resources, disclose information, submit inappropriate workloads, or act beyond the intent of the researcher. Similar concerns arise when an agent is provided unrestricted access to scheduler interfaces.
+The distinction matters because Markdown can influence model behavior but is not a security boundary. Conversely, an MCP capability can enforce authorization even when the model chooses to act.
 
-This work proposes an alternative architecture in which AI does not replace the workload scheduler, research computing policies, or existing access controls. Instead, AI operates as a facilitation and orchestration layer above those systems.
-
-The primary contributions of this paper are:
-
+Our contributions are:
 \begin{enumerate}
-    \item A two-level adoption model that separates an immediately deployable user-governed Markdown approach from an institution-governed MCP approach.
-    \item A portable project-level policy-file mechanism that communicates site behavioral expectations to multiple AI coding clients without requiring a new cluster service.
-    \item An HPC-specific MCP architecture that exposes narrow, policy-controlled capabilities instead of arbitrary shell access.
-    \item Integration of scheduler accounting, GPU telemetry, and Linux Pressure Stall Information (PSI) into AI-assisted resource recommendations.
-    \item A human-governed mechanism for transitioning from AI-generated recommendations to actions such as job submission.
-    \item An evaluation framework that compares baseline, user-level, and system-level AI integration for correctness, usability, resource efficiency, behavioral compliance, and externally enforced security.
+    \item a compact progressive-governance architecture for institutional HPC;
+    \item an empirical separation of evidence selection, evidence interpretation, authorization-sensitive behavior, and technical enforcement;
+    \item a reproducible four-phase evaluation using the same workload and model/client configuration; and
+    \item evidence that behavioral steering and technical enforcement provide complementary, not interchangeable, controls.
 \end{enumerate}
 
-The objective is not to create an autonomous replacement for the HPC scheduler or research computing facilitator. Rather, the objective is to augment existing research computing services with an interface capable of understanding researcher intent while remaining subject to established HPC controls.
+\section{Related Work}
 
-\section{Background and Related Work}
+LLM agents have been connected to HPC and scientific workflow systems for orchestration, simulation, and distributed scientific tasks \cite{ma2025hpcagent,pauloski2025agents,pham2026multiagent}. Other work addresses HPC-oriented assistance and optimization, including domain-adapted support systems and coding-agent performance tuning \cite{hpcllm,vibecodehpc}. These efforts establish that LLMs can use HPC resources and reason about HPC workflows.
 
-The literature relevant to AI-assisted research computing now spans user support, agentic scientific interfaces, scheduler interaction, software automation, and resource optimization. This section positions the proposed two-level governance architecture relative to recent ACM, IEEE, and PEARC work.
+Our focus is different: institutional control of general-purpose AI clients that interact with existing research-computing services. MCP provides a useful abstraction because it connects agents to narrowly defined capabilities rather than requiring unrestricted shell access \cite{mcp2026}. Slurm and operating-system permissions remain authoritative, while the MCP layer can validate, authorize, and audit individual operations. This approach is also consistent with recent concerns about agent-specific authorization boundaries and hostile inputs in HPC environments \cite{hpcagentsecurity,trustworthyhpc}.
 
-\subsection{LLM-Based HPC User Support}
+\section{Progressive Governance Architecture}
 
-LLMs have increasingly been investigated as interfaces for HPC users. HPC-LLM combines retrieval and domain adaptation for operational questions involving Slurm, MPI, GPUs, filesystems, and troubleshooting \cite{hpcllm}. A PEARC 2026 comparative study explicitly evaluates LLM-enabled HPC user support, reflecting the shift from proof-of-concept chatbots toward comparative operational evaluation \cite{llmsupport2026}. Pasupuleti et al. similarly describe an IEEE-published LLM chatbot intended to automate common HPC support interactions and evaluate accuracy and usability \cite{hpcchatbot2025}.
+The proposed architecture has three operational layers:
 
-These systems motivate our user-facing goals, but our evaluation asks a different question: how much additional value is obtained when a general-purpose assistant is first given persistent site behavioral instructions and then given authenticated, enforceable institutional context.
-
-\subsection{Agentic Interfaces, MCP, and HPC Execution}
-
-MCP has already emerged as an interface between AI agents and scientific or HPC services. OpenBridge exposes scientific APIs through an MCP-compliant server, allowing assistants to invoke domain tools through natural language \cite{openbridge2025}. BioCodex goes further in an HPC-native genomics setting, using MCP-oriented tooling and asynchronous Slurm execution for agentic workflows \cite{biocodex2026}. CoMAS-HPC proposes a collaborative multi-agent system for HPC administration and uses MCP to standardize access to HPC resources \cite{comashpc2025}. An IEEE contribution has also demonstrated an MCP server for execution in hybrid quantum--HPC environments \cite{quantummcp2026}.
-
-These works mean that neither ``MCP for science'' nor ``MCP connected to HPC execution'' should be treated as novel by itself. The contribution proposed here is the explicit separation between a low-barrier user governance layer and an institutionally enforced MCP layer, together with an experiment designed to quantify the incremental benefit and failure containment provided by each.
-
-\subsection{Workflow, Software, and Scheduler Automation}
-
-Agentic HPC research also addresses software engineering and workload orchestration. Mondesire et al. use an LLM-based multi-agent system to automate HPC software compilation, deployment, and error resolution \cite{hpcsoftwareagents2025}. LangChain--Parsl connects LLM agent tool execution to HPC resources so computational work can be delegated while the model orchestrates the higher-level workflow \cite{ma2025hpcagent}. VibeCodeHPC explores coding-agent-driven performance optimization on supercomputers and employs Markdown-format configuration documents to define agent roles and operational rules \cite{vibecodehpc}. Hoshino et al. provide a separate Claude Code GPU acceleration case study in which an instruction Markdown file is used to direct parts of the automated workflow \cite{claudegpu2026}.
-
-Natural-language scheduling is also appearing outside traditional batch-HPC interfaces. Sliwko and Mizeria-Pietraszko demonstrate semantic workload allocation using an LLM to interpret natural-language placement preferences for a cluster scheduler \cite{semanticallocation2026}. Kwon et al. propose an ontology-driven LLM service protocol for HPC platforms with an emphasis on workflow interoperability and provenance-aware automation \cite{ontologyhpc2025}.
-
-These systems demonstrate that agents can receive operational instructions and can mediate scheduling or workflow actions. Our user-level approach differs by treating the Markdown instruction mechanism as a deliberately limited \emph{behavioral governance layer} that can be deployed before any privileged integration is available, rather than as an autonomous execution framework.
-
-\subsection{Resource Recommendation, GPU Telemetry, and Observability}
-
-AI-assisted resource selection predates the recent wave of agentic interfaces. The HARP framework uses execution history to estimate HPC application resource requirements and recommend more efficient allocations \cite{harp2023}. Related work has continued to examine AI-driven scheduling and runtime/resource prediction. This establishes that resource recommendation itself is not unique to an LLM agent.
-
-GPU telemetry provides an important empirical basis for such recommendations. Sencan et al. analyze GPU utilization and GPU-memory behavior in large-scale HPC workloads using job metadata and accelerator telemetry, showing substantial opportunities to reason about utilization and provisioning at job level \cite{gpuutil2025}. The ACCESS Software Documentation Service likewise demonstrates the value of structured, site-specific software information for helping HPC users identify available software resources \cite{softwaredocs2025}, while Open OnDemand work illustrates institutional approaches for presenting AI workflows and training environments to researchers \cite{oodai2025}.
-
-The present work extends this operational evidence layer by combining scheduler accounting and GPU telemetry with Linux Pressure Stall Information (PSI) for CPU, memory, and I/O. PSI is an established Linux systems measure and is not claimed as a new metric. The research question is whether exposing stall pressure alongside scheduler and accelerator data improves an AI assistant's diagnosis and resource recommendations.
-
-\subsection{User-Level Markdown Instructions}
-
-General-purpose coding agents increasingly support persistent project instructions. Claude Code, Codex, Gemini CLI, and GitHub Copilot provide project or repository mechanisms that can carry site-specific guidance \cite{claudeinstructions,codexagents,geminiinstructions,copilotinstructions}. Recent HPC agent studies also provide precedent for Markdown-formatted operational or role configuration \cite{vibecodehpc,claudegpu2026}.
-
-However, configuration text remains model context rather than an authorization mechanism. This motivates the distinction central to the proposed architecture: Markdown instructions can reduce inappropriate plans and recommendations, while MCP, Slurm, Linux permissions, and human approval gates independently enforce what actions are allowed.
-
-\subsection{Positioning and Research Gap}
-
-Table~\ref{tab:related-work} summarizes the closest work and the dimensions relevant to this paper. The table is intentionally focused on architectural features rather than claiming that every cited system was designed for institutional governance.
-
-\begin{table}[H]
-\centering
-\caption{Feature-level comparison with selected related work. ``--'' indicates that the feature is not a primary component of the cited work; ``partial'' denotes a related but differently scoped mechanism.}
-\label{tab:related-work}
-\scriptsize
-\setlength{\tabcolsep}{2.5pt}
-\begin{tabular}{p{0.20\textwidth}p{0.11\textwidth}p{0.10\textwidth}p{0.09\textwidth}p{0.14\textwidth}p{0.14\textwidth}p{0.14\textwidth}}
+\begin{center}
+\begin{tabular}{p{0.18\linewidth}p{0.31\linewidth}p{0.41\linewidth}}
 \toprule
-\textbf{Work} & \textbf{User support} & \textbf{MD guidance} & \textbf{MCP} & \textbf{Scheduler/jobs} & \textbf{Performance data} & \textbf{External enforcement} \\
+\textbf{Layer} & \textbf{Mechanism} & \textbf{Role} \\
 \midrule
-HARP \cite{harp2023} & -- & -- & -- & Resource rec. & Execution history & -- \\
-OpenBridge \cite{openbridge2025} & Indirect & -- & Yes & -- & -- & Tool boundary \\
-BioCodex \cite{biocodex2026} & Domain & -- & Yes & Slurm & Job/workflow & Workflow controls \\
-CoMAS-HPC \cite{comashpc2025} & Admin. & -- & Yes & Yes & System context & Agent/tool controls \\
-LLM HPC support \cite{llmsupport2026} & Yes & -- & -- & Support context & Evaluation data & -- \\
-Agent coding studies \cite{vibecodehpc,claudegpu2026} & Indirect & Yes & Partial & Batch execution & Build/GPU tests & Agent rules \\
-GPU utilization \cite{gpuutil2025} & -- & -- & -- & Job metadata & GPU + memory & -- \\
-\textbf{Proposed work} & \textbf{Yes} & \textbf{Yes} & \textbf{Yes} & \textbf{Slurm + approval} & \textbf{CPU, memory, GPU, PSI} & \textbf{MCP + HPC controls + human} \\
+Baseline & General-purpose AI client & General HPC reasoning from prompt and project files \\
+Behavioral & Project Markdown policy & Steers evidence selection, site practices, and approval-sensitive behavior \\
+Technical & Institutional MCP service & Supplies authoritative context and enforces constrained capabilities \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{center}
 
-The gap addressed in this paper is therefore not whether an LLM can answer HPC questions, invoke MCP tools, submit work to a scheduler, or recommend resources. Rather, we study a progressive institutional adoption model with three experimentally separable conditions: (A) general-purpose AI, (B) the same class of AI with portable HPC Markdown behavioral instructions, and (C) Markdown guidance plus an authenticated MCP service that supplies authoritative site context, performance telemetry, and enforceable operation boundaries. This framing permits behavioral compliance and technical enforcement to be measured separately.
+The key design rule is \textbf{least capability}. The agent should receive functions such as \texttt{job\_status}, \texttt{job\_history}, \texttt{validate\_job}, and \texttt{submit\_job}, rather than a generic \texttt{shell(command)} interface. Each function can apply identity, parameter validation, authorization, and audit logging independently.
 
-\subsection{Agent-to-Agent Communication}
+Scheduler accounting and telemetry form the evidence layer. Relevant signals include requested versus consumed memory, elapsed time, CPU utilization, GPU utilization where applicable, filesystem behavior, and Linux PSI for CPU, memory, and I/O. The model can then base recommendations on measured workload behavior rather than generic rules of thumb.
 
-The Agent2Agent protocol addresses a related but different problem. Whereas MCP primarily connects an agent to resources and tools, A2A provides a standard for communication and collaboration between agents \cite{a2a2026}. A2A therefore remains a potential later-stage component of the proposed architecture. Specialized software, scheduler, performance, and data agents could communicate with one another while each uses controlled MCP interfaces to interact with underlying services. The initial implementation and evaluation proposed in this paper do not require a multi-agent architecture.
+State-changing actions form an explicit boundary. A user request may authorize the agent to attempt an operation, but the control plane independently decides whether that capability is permitted. Thus, natural-language intent and institutional authorization are separate inputs.
 
-\section{Two-Level Adoption Model}
+\section{Evaluation Design}
 
-The proposed architecture distinguishes between two practical levels of AI adoption. The levels are complementary rather than mutually exclusive. A research computing organization can begin with the user-level approach without deploying new infrastructure and later add the system-level approach for authenticated context, telemetry, and controlled actions.
+We evaluated the architecture using one reproducible right-sizing scenario and one fixed client/model configuration: Codex CLI 0.149.1 with GPT-5.6 Sol. The workload was a serial Python scan of 12,000 deterministic small files. Researcher-controlled measurements showed approximately 21--22 MiB peak RSS against a 20 GiB request, 13--15 s scheduler elapsed time against a 20 min request, no GPU path, and correctness checks passing in all measured runs. Repeated scans were warm/page-cache influenced; node-level CPU \texttt{some} PSI was about 9\%, while memory and I/O PSI were negligible.
 
-\subsection{Level 1: User-Governed AI with Markdown Policy Files}
+Each phase isolated a different governance question:
 
-The user-level approach places an AI coding assistant in the researcher's existing working environment and provides persistent HPC-specific instructions through Markdown files recognized by the selected client. A site may maintain one canonical policy source, such as \path{HPC-AI-INSTRUCTIONS.md}, and copy or render that content into \texttt{CLAUDE.md}, \texttt{AGENTS.md}, \texttt{GEMINI.md}, or \path{.github/copilot-instructions.md} as appropriate \cite{claudeinstructions,codexagents,geminiinstructions,copilotinstructions}.
-
-This level requires no new scheduler integration. The agent can explain commands, generate Slurm scripts, review source code, suggest software environments, and help interpret errors while the researcher remains responsible for reviewing commands and initiating consequential actions. The Markdown file establishes expected behavior such as using Slurm for sustained compute, avoiding destructive filesystem operations, protecting credentials, and seeking confirmation before job submission or cancellation.
-
-The primary advantage is deployability: the model can be made more HPC-aware inside a normal user project with little or no cluster-side engineering. The limitation is equally important: the policy file is a soft control. It influences model behavior but does not create a security boundary.
-
-\subsection{Level 2: Institution-Governed AI with MCP}
-
-The system-level approach introduces an institutional MCP gateway between the AI client and production HPC services. Instead of allowing the agent to construct arbitrary shell commands, the gateway exposes constrained operations such as \texttt{job\_status()}, \texttt{software\_find()}, \texttt{gpu\_utilization()}, \texttt{psi\_io()}, \texttt{validate\_job()}, and, at higher trust levels, \texttt{submit\_job()}.
-
-This level adds authenticated site context, centralized policy, auditability, and enforceable authorization. The MCP service can check researcher identity, ownership, allocation membership, parameter ranges, approval state, and other policy conditions before an action reaches Slurm or another production service. The Markdown policy layer can remain in place because it reduces undesirable behavior before a tool call is attempted, while the MCP gateway independently prevents prohibited actions.
-
-\begin{table}[tbp]
-\centering
-\caption{Comparison of the two proposed AI adoption levels.}
-\label{tab:two-level-model}
-\begin{tabular}{p{0.20\linewidth}p{0.34\linewidth}p{0.34\linewidth}}
-\toprule
-\textbf{Characteristic} & \textbf{User-Level Markdown Approach} & \textbf{System-Level MCP Approach} \\
-\midrule
-Deployment & Researcher home/project directory & Institution-operated service \\
-Primary purpose & Behavioral guidance and assistance & Authenticated context and enforced capabilities \\
-Cluster changes & None or minimal & MCP gateway and service integrations \\
-Typical access & Local files and normal user commands & Narrow site-defined tools and resources \\
-Policy strength & Soft / behavior shaping & Enforceable outside the model \\
-Telemetry & User-provided or locally visible & Scheduler, GPU, PSI, storage, and site telemetry \\
-Actions & Researcher reviews and executes & Controlled actions with validation and approval \\
-Auditability & Primarily local/client dependent & Centralized institutional logging possible \\
-Best initial use & Immediate researcher assistance & Production integration and controlled automation \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-The two-level model provides a migration path rather than requiring an institution to begin with fully autonomous agents. User-level guidance can be introduced first, measured, and refined. MCP capabilities can then be added selectively where institutional context or enforceable action is valuable.
-
-\section{Design Principles}
-
-The proposed architecture is based on seven principles.
-
-\subsection{Existing HPC Infrastructure Remains Authoritative}
-
-The AI system does not become a scheduler. Slurm continues to determine resource availability, priorities, limits, accounting, and job execution.
-
-Similarly, existing Linux permissions, authentication systems, allocation policies, storage permissions, and software controls remain authoritative.
-
-AI proposes and orchestrates operations within these systems rather than bypassing them.
-
-\subsection{Least Capability}
-
-AI agents should receive the minimum capability necessary to perform a requested operation.
-
-For example, an AI system that needs to determine whether a researcher's job is running requires access to that researcher's scheduler status, not unrestricted shell access.
-
-The preferred abstraction is therefore:
-
-\begin{lstlisting}
-job_status(user)
-\end{lstlisting}
-
-rather than:
-
-\begin{lstlisting}
-shell(command)
-\end{lstlisting}
-
-This distinction dramatically reduces the operational authority delegated to the model.
-
-\subsection{Progressive Trust}
-
-AI capabilities are divided into three trust levels.
-
-\begin{table}[tbp]
-\centering
-\caption{Proposed AI trust levels for HPC integration.}
-\begin{tabular}{lll}
-\toprule
-\textbf{Level} & \textbf{Capability} & \textbf{Example} \\
-\midrule
-1 & Advisory & Generate a Slurm script \\
-2 & Read-only & Retrieve job history or performance information \\
-3 & State-changing & Submit or cancel a job \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-Level 1 functionality can generally be introduced with minimal infrastructure changes.
-
-Level 2 requires authenticated access to institutional information.
-
-Level 3 requires substantially stronger authorization, logging, validation, and confirmation controls.
-
-\subsection{Human-Governed Actions}
-
-The transition between recommendation and execution is an explicit architectural boundary.
-
-An AI assistant may generate the following recommendation:
-
-\begin{lstlisting}
-1 GPU
-8 CPU cores
-64 GB RAM
-2-hour time limit
-\end{lstlisting}
-
-and produce the corresponding Slurm script.
-
-Submission should initially require an explicit researcher action such as:
-
-\begin{lstlisting}
-Submit this job.
-\end{lstlisting}
-
-This model retains the convenience of natural-language interaction while making consequential actions visible to the researcher.
-
-\subsection{Progressive Adoption}
-
-An institution should not need to deploy a production AI gateway before researchers can benefit from AI assistance. The architecture therefore treats user-level Markdown guidance as a legitimate first deployment stage rather than merely a configuration detail of the final system. Capabilities can progress from user-governed advisory assistance to read-only institutional context, performance telemetry, and finally controlled state-changing operations. Each stage can be evaluated before additional authority is introduced.
-
-\subsection{Defense in Depth Across Client and Server}
-
-The architecture separates \emph{behavioral guidance} from \emph{enforcement}. Project-level configuration files instruct the AI client how it should behave in the HPC environment. The MCP gateway and underlying HPC services independently determine what the client is actually allowed to do.
-
-This distinction is important because a model may misunderstand, omit, or disregard a project instruction. A researcher may also modify a local configuration file. Therefore, a rule such as ``do not submit jobs without confirmation'' should appear in the client instructions to reduce accidental behavior, but the submission tool should also require an authenticated request, validate parameters, and enforce the approval state. The result is a defense-in-depth model in which client configuration reduces unsafe intent before it reaches the service boundary and server-side controls prevent prohibited actions even when client guidance fails.
-
-\subsection{Evidence-Based Recommendations}
-
-The AI should preferentially use operational evidence rather than generic HPC recommendations.
-
-Resource recommendations can incorporate:
-
-\begin{itemize}
-    \item previous job runtime;
-    \item requested versus consumed memory;
-    \item CPU utilization;
-    \item GPU compute utilization;
-    \item GPU memory utilization and peak memory consumption;
-    \item GPU power and accelerator saturation indicators where available;
-    \item scheduler state;
-    \item application exit status;
-    \item filesystem behavior;
-    \item Linux Pressure Stall Information (PSI) for CPU, memory, and I/O;
-    \item PSI short-, medium-, and long-window averages (\texttt{avg10}, \texttt{avg60}, and \texttt{avg300});
-    \item cumulative stall time;
-    \item application output.
-\end{itemize}
-
-Consequently, the AI assistant can evolve from a generic question-answering system into an HPC-specific optimization service.
-
-\section{Proposed Architecture}
-
-Figure~\ref{fig:architecture} shows the two adoption paths. The user-level path can operate independently using existing user permissions and HPC commands. The system-level path inserts an MCP gateway that becomes the enforceable interface to institutional services. Both paths may use the same canonical Markdown policy content.
-
-\begin{figure}[H]
-\centering
-\begin{tikzpicture}[node distance=6mm and 10mm]
-  \node[rccore, minimum width=31mm] (researcher) {Researcher};
-  \node[rccore, below=of researcher, minimum width=39mm] (agent) {AI Client / Agent};
-  \node[rcsmall, left=13mm of agent, text width=29mm] (policy) {Markdown Policy\\Files};
-
-  \node[rcsmall, below left=13mm and 20mm of agent, text width=34mm] (userhpc) {Existing User HPC\\Interface};
-  \node[rcsmall, below=5mm of userhpc, text width=34mm] (userservices) {Shell / Slurm / Spack\\Human-reviewed actions};
-
-  \node[rccore, below right=13mm and 18mm of agent, minimum width=42mm] (gateway) {Institutional MCP Gateway};
-  \node[rcsmall, below=5mm of gateway, text width=42mm] (mcpsvc) {Slurm / Spack / Docs / Storage\\GPU + PSI Telemetry};
-
-  \draw[rcarrow] (researcher) -- (agent);
-  \draw[rcarrow, dashed] (policy) -- (agent);
-  \draw[rcarrow] (agent.south) -- ++(0,-3mm) -| node[near end,left,font=\scriptsize]{user-level} (userhpc.north);
-  \draw[rcarrow] (userhpc) -- (userservices);
-  \draw[rcarrow] (agent.south) -- ++(0,-3mm) -| node[near end,right,font=\scriptsize]{system-level} (gateway.north);
-  \draw[rcarrow] (gateway) -- (mcpsvc);
-\end{tikzpicture}
-\caption{Two-level AI adoption architecture for HPC. The user-level path combines project Markdown instructions with existing researcher permissions and human-reviewed actions. The system-level path uses an institutional MCP gateway to provide authenticated context, telemetry, and enforceable controls.}
-\label{fig:architecture}
-\end{figure}
-
-At the user level, the AI client behaves like an HPC-aware assistant operating under the same permissions and responsibilities as the researcher. The Markdown policy file is intended to make appropriate site behavior explicit before commands are proposed. At the system level, the AI client communicates through site-defined MCP operations whose parameters, permissions, and approval requirements are enforced outside the model.
-
-This separation allows the same research workflow to evolve without changing the user's conceptual interface. A researcher might first ask an AI client to generate a Slurm script using only Markdown guidance. Later, the same type of request could be augmented by MCP-based software discovery, scheduler history, GPU telemetry, and PSI measurements, and eventually by validated job submission. The site therefore gains increasing observability and control without requiring researchers to learn a completely different interaction model.
-
-\subsection{Documentation Service}
-
-Site documentation should be one of the first resources exposed.
-
-For example:
-
-\begin{lstlisting}
-documentation_search(
-    query="How do I run MATLAB?"
-)
-\end{lstlisting}
-
-allows the assistant to retrieve institution-specific instructions rather than generating a response based on generalized HPC knowledge.
-
-This capability could include documentation regarding:
-
-\begin{itemize}
-    \item cluster access;
-    \item Slurm;
-    \item software;
-    \item GPUs;
-    \item storage;
-    \item data transfer;
-    \item containers;
-    \item Jupyter;
-    \item MATLAB;
-    \item research computing policies.
-\end{itemize}
-
-\subsection{Software Service}
-
-The software interface provides controlled access to software inventory information.
-
-Possible operations include:
-
-\begin{lstlisting}
-software_find("gromacs")
-software_versions("python")
-environment_info("default-ml")
-\end{lstlisting}
-
-For installations using Spack, these tools can query existing environments or package metadata.
-
-Spack additionally supports container and OCI-oriented workflows, creating an opportunity for the AI layer to recommend either native HPC software environments or containerized execution where appropriate \cite{spackcontainers}.
-
-\subsection{Scheduler Service}
-
-Slurm provides both command-line and REST interfaces for interacting with scheduler information. Slurm's \texttt{slurmrestd} service exposes scheduler functionality through a REST API using authenticated interfaces. Official Slurm documentation cautions that \texttt{slurmrestd} is not intended to be directly exposed to untrusted networks, reinforcing the value of an intermediate controlled service such as the proposed MCP gateway \cite{slurmrest}.
-
-Initial scheduler tools could be limited to:
-
-\begin{lstlisting}
-job_status()
-job_history()
-job_details(job_id)
-job_logs(job_id)
-\end{lstlisting}
-
-Later capabilities could include:
-
-\begin{lstlisting}
-validate_job()
-submit_job()
-cancel_job()
-\end{lstlisting}
-
-All scheduler operations must execute using the authenticated identity and permissions of the requesting researcher.
-
-
-\subsection{Performance Telemetry Service}
-
-Scheduler accounting describes what resources were requested and, to a degree, what resources were consumed. For AI-assisted optimization, this information should be combined with finer-grained node and accelerator telemetry.
-
-For GPU workloads, the telemetry service should expose measures such as:
-
-\begin{itemize}
-    \item GPU compute utilization;
-    \item allocated versus peak GPU memory;
-    \item GPU memory utilization;
-    \item power draw relative to the device power limit;
-    \item temperature and throttling indicators;
-    \item accelerator occupancy or streaming multiprocessor activity where available;
-    \item host-to-device and device-to-host transfer activity where available.
-\end{itemize}
-
-A minimal AI-facing interface could expose these data through functions such as:
-
-\begin{lstlisting}
-gpu_utilization(job_id)
-gpu_memory(job_id)
-gpu_power(job_id)
-gpu_throttling(job_id)
-\end{lstlisting}
-
-The purpose is not simply to report GPU statistics. The AI layer should interpret them in the context of the Slurm allocation. For example, a job requesting a GPU while sustaining low GPU compute utilization but high CPU or I/O pressure may be limited by data preparation or storage rather than accelerator capacity. Conversely, high GPU memory consumption near the device limit may justify a larger-memory accelerator or changes to the application batch size.
-
-Linux Pressure Stall Information (PSI) provides a complementary view of system contention. PSI reports the proportion of time tasks are delayed because CPU, memory, or I/O resources are unavailable. The proposed telemetry service should collect CPU, memory, and I/O pressure for each compute node and, where the operating environment permits, associate these measurements with individual jobs.
-
-The principal PSI measures used by the system are:
-
-\begin{itemize}
-    \item \texttt{avg10}: average stall percentage over approximately 10 seconds;
-    \item \texttt{avg60}: average stall percentage over approximately 60 seconds;
-    \item \texttt{avg300}: average stall percentage over approximately 300 seconds;
-    \item \texttt{total}: cumulative stall time over the observation period;
-    \item \texttt{some}: time during which at least one task is stalled;
-    \item \texttt{full}: time during which all non-idle tasks in the measured scope are simultaneously stalled, when reported for the resource.
-\end{itemize}
-
-These measures can be exposed to an AI agent using controlled functions such as:
-
-\begin{lstlisting}
-psi_cpu(job_id)
-psi_memory(job_id)
-psi_io(job_id)
-pressure_summary(job_id)
-\end{lstlisting}
-
-The AI should interpret pressure as a time-varying signal rather than a single threshold. Short spikes in \texttt{avg10} may be benign, while sustained elevation across \texttt{avg60} and \texttt{avg300} is stronger evidence of persistent contention.
-
-Combining scheduler accounting, GPU telemetry, and PSI produces a richer performance model:
-
-\begin{figure}[H]
-\centering
-\begin{tikzpicture}[node distance=10mm]
-  \node[rcbox, text width=45mm, align=left] (evidence) {
-    \textbf{Performance evidence}\\[-1mm]
-    \footnotesize
-    Slurm allocation and accounting\\
-    GPU utilization and memory\\
-    CPU, memory, and I/O PSI\\
-    Application logs
-  };
-  \node[rccore, right=of evidence, text width=35mm] (analysis) {AI performance\\analysis};
-  \node[rccore, right=of analysis, text width=36mm] (recommend) {Resource or workflow\\recommendation};
-
-  \draw[rcarrow] (evidence) -- (analysis);
-  \draw[rcarrow] (analysis) -- (recommend);
-\end{tikzpicture}
-\caption{Performance-evidence pipeline combining scheduler accounting, GPU telemetry, PSI, and application logs before generating an optimization recommendation.}
-\label{fig:performance-pipeline}
-\end{figure}
-
-\section{AI-Assisted HPC Workflows}
-
-\subsection{Job Creation}
-
-A researcher could provide natural-language intent:
-
-\begin{quote}
-Train \texttt{model.py} using one GPU.
-\end{quote}
-
-The AI assistant can inspect the application and site information before generating an initial job specification.
-
-For example:
-
-\begin{lstlisting}
-#SBATCH --gres=gpu:1
-#SBATCH --cpus-per-task=8
-#SBATCH --mem=64G
-#SBATCH --time=02:00:00
-\end{lstlisting}
-
-The assistant should explain the recommendation and allow the researcher to review or modify it before execution.
-
-\subsection{Job Troubleshooting}
-
-Consider a researcher asking:
-
-\begin{quote}
-Why did my job fail?
-\end{quote}
-
-The agent could retrieve:
-
-\begin{lstlisting}
-scheduler state
-exit code
-stdout
-stderr
-maximum memory
-requested memory
-runtime
-\end{lstlisting}
-
-and generate a diagnosis.
-
-For example, an out-of-memory scheduler state combined with memory consumption near the allocation limit provides substantially stronger evidence than attempting to infer the failure from source code alone.
-
-\subsection{Resource Optimization}
-
-Resource optimization represents one of the most promising applications.
-
-Suppose a researcher repeatedly requests:
-
-\begin{lstlisting}
-32 CPUs
-128 GB memory
-4 hours
-\end{lstlisting}
-
-but scheduler accounting shows that previous jobs used approximately:
-
-\begin{lstlisting}
-4 CPUs
-15 GB memory
-40 minutes
-\end{lstlisting}
-
-The assistant can recommend a smaller future allocation.
-
-Conversely, evidence of memory exhaustion, CPU saturation, GPU underutilization, or filesystem contention may indicate that additional resources or workflow changes are required.
-
-GPU telemetry and Pressure Stall Information extend this analysis beyond requested-versus-consumed resource accounting. GPU compute utilization and memory consumption indicate whether an accelerator is being used effectively, while CPU, memory, and I/O PSI indicate whether the host is experiencing contention that can delay application progress.
-
-For example, the AI assistant can distinguish several qualitatively different cases:
-
-\begin{table}[H]
+\begin{table}[htbp]
 \centering
 \small
-\caption{Example interpretations combining GPU telemetry and stall pressure.}
-\begin{tabular}{p{0.27\linewidth}p{0.27\linewidth}p{0.36\linewidth}}
+\begin{tabular}{p{0.09\linewidth}p{0.31\linewidth}p{0.25\linewidth}p{0.27\linewidth}}
 \toprule
-\textbf{Observed condition} & \textbf{Supporting measures} & \textbf{Potential recommendation} \\
+\textbf{Phase} & \textbf{Question} & \textbf{Comparison} & \textbf{Primary outcome} \\
 \midrule
-GPU underutilized & Low GPU utilization, low GPU memory use & Reduce GPU request, improve batching, or inspect application parallelism \\
-CPU-bound GPU job & Low GPU utilization with sustained CPU PSI & Increase or rebalance CPU resources, optimize data preprocessing \\
-I/O-bound GPU job & Low GPU utilization with sustained I/O PSI & Stage data, aggregate small files, or improve the data pipeline \\
-Memory pressure & Elevated memory PSI and high host memory use & Increase memory request or reduce application memory footprint \\
-GPU memory constrained & High peak GPU memory, failures or near-capacity use & Reduce batch size or select a GPU with more memory \\
-Well balanced & High useful GPU utilization with low sustained PSI & Preserve the current resource geometry as a baseline \\
+1 & Does Markdown change what evidence the model seeks? & Baseline vs. Markdown & Evidence-selection behavior \\
+2 & Does Markdown improve interpretation once evidence is identical? & Baseline vs. Markdown & Evidence-interpretation score \\
+3 & Does Markdown change action behavior when authorization is absent or explicit? & 2$\times$2 Markdown $\times$ authorization & Scheduler action attempts \\
+4 & Does MCP enforce authorization after an action is requested? & 2$\times$2 Markdown $\times$ MCP authorization & Denied vs. allowed action \\
 \bottomrule
 \end{tabular}
+\caption{Four-phase evaluation design.}
 \end{table}
 
-\Needspace{10\baselineskip}
-The resulting interaction becomes a feedback loop:
+Trials used fresh sessions and alternating order where applicable. State-changing experiments used disposable projects and instrumented or simulated scheduler actions; production Slurm was not contacted by the Phase 3 or Phase 4 harnesses.
 
-\begin{figure}[H]
-\centering
-\begin{tikzpicture}[node distance=5mm and 5mm]
-  \node[rcsmall] (submit) {Submit};
-  \node[rcsmall, right=of submit] (execute) {Execute};
-  \node[rcsmall, right=of execute] (measure) {Measure};
-  \node[rcsmall, right=of measure] (analyze) {Analyze};
-  \node[rcsmall, right=of analyze] (recommend) {Recommend};
+\section{Results}
 
-  \draw[rcarrow] (submit) -- (execute);
-  \draw[rcarrow] (execute) -- (measure);
-  \draw[rcarrow] (measure) -- (analyze);
-  \draw[rcarrow] (analyze) -- (recommend);
-  \draw[rcarrow] (recommend.south) .. controls +(0,-12mm) and +(0,-12mm) ..
-        node[below,font=\footnotesize]{next submission} (submit.south);
-\end{tikzpicture}
-\caption{Closed-loop optimization workflow for repeated HPC jobs.}
-\label{fig:optimization-loop}
-\end{figure}
-
-This creates the possibility of continuous, evidence-based improvement to resource requests.
-
-\subsection{Software Environment Creation}
-
-Another common HPC problem occurs when researchers receive source code developed on another computer.
-
-A researcher could ask:
-
-\begin{quote}
-Can I run this repository on the cluster?
-\end{quote}
-
-The assistant could inspect dependency metadata such as:
-
-\begin{lstlisting}
-requirements.txt
-pyproject.toml
-environment.yml
-CMakeLists.txt
-spack.yaml
-\end{lstlisting}
-
-and compare those requirements with locally available software.
-
-The AI could then recommend one of several paths:
-
-\begin{enumerate}
-    \item use existing modules;
-    \item use an existing Spack environment;
-    \item construct a user-level environment;
-    \item create a Spack environment;
-    \item create or use a container;
-    \item request Research Computing assistance for unsupported software.
-\end{enumerate}
-
-The AI therefore acts as a translation layer between application dependencies and site-supported software mechanisms.
-
-\section{Security and Governance}
-
-Security is central to the proposed architecture because LLM agents introduce an additional decision-making component between users and computing resources.
-
-\subsection{Arbitrary Shell Execution}
-
-A particularly risky architecture would expose a function such as:
-
-\begin{lstlisting}
-execute_shell(command)
-\end{lstlisting}
-
-to the model.
-
-Such an interface makes the effective authority of the AI approximately equal to that of the authenticated Unix account.
-
-The proposed architecture instead exposes narrowly defined operations.
-
-For example:
-
-\begin{lstlisting}
-job_history()
-\end{lstlisting}
-
-can internally execute or query the necessary scheduler functionality while restricting the model's ability to change command arguments or invoke unrelated operating system functionality.
-
-\subsection{Authorization}
-
-All operations should be evaluated using the identity of the requesting researcher.
-
-The AI should not be permitted to use its own institutional service identity to circumvent permissions that would normally apply to the researcher.
-
-A researcher who cannot inspect another user's job through the normal HPC environment should likewise be unable to request that information through AI.
-
-\subsection{User-Level Markdown Policy Files and Behavioral Guardrails}
-
-The user-level adoption path begins by providing each researcher project with a standard AI instruction template. A site can maintain a canonical file, for example \texttt{HPC-AI-INSTRUCTIONS.md}, and generate or copy its contents into the filename recognized by the researcher's selected AI client. Table~\ref{tab:agent-policy-files} shows common examples. The objective is not to grant or revoke permissions through a Markdown file; it is to place HPC-specific expectations in the model's working context before the agent proposes commands or edits.
-
-\begin{table}[H]
+\begin{table}[htbp]
 \centering
 \small
-\caption{Example project-level instruction files for common coding agents.}
-\label{tab:agent-policy-files}
-\begin{tabular}{p{0.23\linewidth}p{0.34\linewidth}p{0.34\linewidth}}
+\begin{tabular}{p{0.10\linewidth}p{0.34\linewidth}p{0.46\linewidth}}
 \toprule
-\textbf{AI client} & \textbf{Project instruction file} & \textbf{Use in the proposed HPC workflow} \\
+\textbf{Phase} & \textbf{Result} & \textbf{Interpretation} \\
 \midrule
-Claude Code & \texttt{CLAUDE.md} & Persistent HPC and project instructions \\
-Codex & \texttt{AGENTS.md} & Repository practices, approved commands, and HPC rules \\
-Gemini CLI & \texttt{GEMINI.md} & Project context and operational constraints \\
-GitHub Copilot & \path{.github/copilot-instructions.md} & Repository-wide custom instructions \\
+1 & PSI composite: 0/10 baseline vs. 10/10 Markdown; conservative rubric 86.7\% vs. 93.3\% & Markdown changed evidence selection, not generic HPC competence \\
+2 & 18/18 criteria in 10/10 trials for both conditions & Once identical evidence was supplied, both conditions interpreted it correctly \\
+3 & Authorization absent: 8/10 baseline state-change attempts vs. 0/10 Markdown; explicit authorization: 10/10 Markdown & Markdown produced authorization-sensitive action behavior \\
+4 & 20/20 unauthorized MCP submissions denied; 20/20 authorized submissions allowed exactly once; 0/40 direct bypass attempts & MCP enforced the capability boundary independently of Markdown \\
 \bottomrule
 \end{tabular}
+\caption{Consolidated experimental results.}
 \end{table}
 
-The site template should be short enough to remain salient to the agent and specific enough to describe the HPC operating model. A representative policy includes the following requirements:
+\subsection{Phase 1: Markdown Changes Evidence Selection}
 
-\begin{itemize}
-    \item treat login nodes as orchestration and development systems, not as locations for sustained computational workloads;
-    \item use a Slurm allocation for compute-intensive or long-running work;
-    \item do not submit, cancel, requeue, or modify jobs unless the researcher explicitly requests the action;
-    \item restrict file reads and writes to the current project and paths explicitly identified by the researcher;
-    \item never expose credentials, API tokens, SSH keys, or other secrets in prompts, generated files, logs, or version control;
-    \item do not send controlled, confidential, export-restricted, or otherwise prohibited research data to an external AI service unless that service is approved for the data class;
-    \item explain commands that can change files, environments, jobs, or data before executing them;
-    \item begin substantial edits from a known version-control checkpoint and present the resulting \texttt{git diff} for researcher review; and
-    \item prefer site documentation, approved software environments, and scheduler-mediated execution over assumptions based on generic HPC practice.
-\end{itemize}
+Both baseline and governed sessions correctly identified the main generic HPC issues, including the small-file workload, excessive memory request, unnecessary resources, and the need for Slurm accounting and validation. The repeatable difference was PSI. Baseline sessions mentioned no PSI domain in 10 trials; Markdown-governed sessions mentioned at least one PSI domain in all 10 trials. CPU PSI appeared in 9/10 governed trials and memory and I/O PSI in 10/10, versus 0/10 baseline for each domain.
 
-A condensed project policy might therefore contain:
+Because the three PSI rows represent one correlated policy concept, the conservative composite result is the appropriate headline: 86.7\% baseline versus 93.3\% Markdown, a 6.7 percentage-point difference. The result supports a narrow claim: Markdown reliably steered the assistant toward institution-selected telemetry.
 
-\begin{lstlisting}
-# HPC AI Instructions
-- Do not run heavy computation on login nodes.
-- Use Slurm allocations for compute-intensive work.
-- Do not submit, cancel, requeue, or modify jobs without
-  explicit researcher approval.
-- Limit file operations to this project unless the user
-  identifies another path.
-- Never expose credentials, tokens, or SSH keys.
-- Explain consequential commands before executing them.
-- Work from a clean git checkpoint and show git diff.
-- Follow site documentation and approved software paths.
-\end{lstlisting}
+\subsection{Phase 2: Identical Evidence Eliminates the Observed Gap}
 
-This configuration layer is intentionally redundant with server-side controls. For example, the policy file may instruct the agent not to submit an unapproved job, while the MCP \texttt{submit\_job()} function independently refuses a request without the required approval state. Similarly, the client instruction can tell the model not to inspect another researcher's files, while Unix permissions and the MCP authorization layer prevent such access regardless of the model's response. This redundancy is desirable: configuration files reduce undesirable behavior at the planning stage, while external controls contain failures at the execution stage.
+The same measured evidence packet was then supplied to both conditions. All 18 interpretation criteria were satisfied in all 10 baseline and all 10 Markdown trials. Both conditions retained one CPU, rejected a GPU, recognized the severe memory and walltime over-request, treated the warm-cache throughput cautiously, and correctly noted that node-level PSI could not be attributed directly to the job.
 
-\subsection{Auditability}
+This ceiling result changes the interpretation of Phase 1. Markdown did not make the underlying model observably better at interpreting evidence once that evidence was present. Its measurable value in this scenario was ensuring that site-selected evidence entered the reasoning process.
 
-Every state-changing AI request should be logged with sufficient information to reconstruct the action.
+\subsection{Phase 3: Markdown Changes Authorization-Sensitive Behavior}
 
-Relevant information includes:
+We next used a 2$\times$2 design with project Markdown present or absent and researcher authorization absent or explicit. All 40 sessions prepared a defensible right-sized candidate.
 
-\begin{lstlisting}
-user
-timestamp
-tool
-parameters
-job identifier
-authorization result
-confirmation state
-\end{lstlisting}
+When authorization was absent, baseline sessions attempted a scheduler state change in 8/10 trials, while Markdown-governed sessions attempted none. The paired difference was significant under the exact paired test ($p=0.0078125$). When authorization was explicit, Markdown-governed sessions performed the intended action in 10/10 trials; baseline did so in all trials but made a duplicate attempt in one trial.
 
-The exact natural-language conversation may be logged separately depending upon institutional privacy requirements.
+The key result is behavioral: Markdown did not merely suppress action. It conditioned action on authorization.
 
-\subsection{Prompt Injection and Untrusted Data}
+\subsection{Phase 4: MCP Enforces the Boundary}
 
-Scientific repositories, application output, documentation, and downloaded files must be considered potentially untrusted input when interpreted by an LLM.
+The final challenge used an identical prompt in all four cells and explicitly instructed the agent to attempt exactly one validation through the institutional governance service. Only the external MCP authorization state varied between absent and granted; baseline versus Markdown remained the second factor.
 
-This is particularly important when the model has access to state-changing tools.
+All 40 sessions attempted exactly one \texttt{submit\_job}. With authorization absent, the MCP service denied all 20 requests and no unauthorized action succeeded. With authorization granted, all 20 requests were allowed exactly once and returned the simulated validation result. No session made a direct scheduler bypass attempt.
 
-Recent work on security evaluation for HPC agents highlights the need to evaluate hostile inputs and agent-specific authorization boundaries in addition to traditional HPC account security \cite{hpcagentsecurity}.
-
-Tool authorization must therefore be enforced by software controls outside the model. A prompt contained inside a README file must not be capable of granting the model additional scheduler or filesystem authority.
-
-\section{Implementation Strategy}
-
-A research computing organization can introduce the architecture incrementally and evaluate each increase in capability before proceeding.
-
-\subsection{Phase 1: User-Level Markdown-Governed AI}
-
-Provide researchers with a canonical \texttt{HPC-AI-INSTRUCTIONS.md} policy and simple instructions for adapting it to their selected AI client. The initial policy should cover login-node behavior, Slurm use, file safety, credentials, software environments, Git review, and approval before consequential actions.
-
-At this stage the AI may:
-
-\begin{itemize}
-    \item explain HPC concepts;
-    \item generate and review Slurm scripts;
-    \item review source code;
-    \item suggest CPU, memory, GPU, and walltime requests;
-    \item recommend site-supported software mechanisms;
-    \item interpret application and scheduler errors.
-\end{itemize}
-
-No privileged cluster integration is required. Researchers continue to execute or approve commands through their normal user environment.
-
-\subsection{Phase 2: Read-Only Institutional MCP Service}
-
-Introduce a site MCP service exposing authenticated read-only capabilities such as:
-
-\begin{lstlisting}
-documentation_search
-software_find
-job_status
-job_history
-job_logs
-storage_usage
-\end{lstlisting}
-
-This phase adds authoritative site context without allowing the agent to change scheduler or storage state.
-
-\subsection{Phase 3: Performance-Aware MCP}
-
-Add scheduler accounting and telemetry:
-
-\begin{lstlisting}
-job_performance
-cpu_efficiency
-memory_efficiency
-gpu_utilization
-gpu_memory
-gpu_power
-psi_cpu
-psi_memory
-psi_io
-pressure_summary
-resource_recommendation
-\end{lstlisting}
-
-The system can now base recommendations on the researcher's actual workload history rather than generic rules of thumb.
-
-\subsection{Phase 4: Controlled Actions}
-
-Introduce narrowly constrained state-changing operations such as:
-
-\begin{lstlisting}
-validate_job
-submit_job
-cancel_job
-\end{lstlisting}
-
-These operations require authentication, authorization, parameter validation, audit logging, and explicit approval. The Markdown policy remains useful as an early behavioral guardrail, but MCP is responsible for enforcing the operation boundary.
-
-\subsection{Phase 5: Specialized Agents and A2A}
-
-Only after the previous infrastructure is established should multi-agent functionality be considered. Possible roles include a research agent, software agent, scheduler agent, performance agent, and data agent. A2A or another agent communication mechanism could coordinate these roles while MCP continues to provide controlled access to infrastructure.
-
-\section{Evaluation Methodology}
-
-A production implementation should be evaluated empirically before conclusions are drawn regarding its effectiveness.
-
-We propose four evaluation dimensions evaluated across three progressively integrated AI conditions.
-
-\subsection{Task Correctness}
-
-Construct a benchmark of representative research computing questions and tasks.
-
-Examples include:
-
-\begin{enumerate}
-    \item create a single-core CPU job;
-    \item request a GPU correctly;
-    \item diagnose an out-of-memory failure;
-    \item find installed software;
-    \item identify excessive CPU allocation;
-    \item identify insufficient runtime;
-    \item determine why a queued job is pending;
-    \item construct a software environment;
-    \item interpret an application error;
-    \item identify I/O contention.
-\end{enumerate}
-
-Responses can be independently evaluated by experienced HPC staff.
-
-Metrics should include:
-
-\begin{lstlisting}
-correct
-partially correct
-incorrect
-unsafe
-\end{lstlisting}
-
-\subsection{Researcher Effort}
-
-A controlled user study could compare completion of common HPC tasks using:
-
-\begin{description}
-    \item[Group A -- Baseline AI:] a general-purpose AI coding assistant without site-specific HPC instructions or MCP integration.
-    \item[Group B -- User-Level AI:] the same class of AI assistant with the site Markdown policy file and normal researcher HPC access.
-    \item[Group C -- System-Level AI:] the site Markdown policy plus the proposed authenticated HPC MCP service and telemetry.
-\end{description}
-
-A separate traditional documentation-only cohort may be retained as an operational baseline when participant numbers permit, but the primary experiment isolates the incremental value of user-level instructions and system-level integration.
-
-Measurements could include:
-
-\begin{itemize}
-    \item task completion rate;
-    \item time to completion;
-    \item number of failed submissions;
-    \item number of support requests;
-    \item researcher confidence;
-    \item usability scores;
-    \item number of inappropriate login-node execution attempts;
-    \item number of consequential commands issued without confirmation;
-    \item number of times the researcher must correct an AI-generated HPC command.
-\end{itemize}
-
-The comparison between Groups A and B measures the value of the user-level Markdown approach. The comparison between Groups B and C measures the additional value of authoritative site context, telemetry, and enforced MCP operations.
-
-\subsection{Initial IO-01B Markdown-Governance Results}
-
-The first completed experiment evaluates the user-level Markdown layer using a blinded small-file I/O workload. Ten paired static-analysis trials compared Codex without site-specific project instructions (Group A) against the same client, model, workload, and prompt with the HPC policy installed as \texttt{AGENTS.md} at the Git repository root (Group B). Trial order alternated between baseline-first and Markdown-first execution. No Slurm job was submitted and no workload was executed during this phase.
-
-Across the 17 testable rubric items, the baseline condition passed a mean of 13.0 criteria (76.5\%), while the Markdown-governed condition passed 15.9 (93.5\%). The governed response scored higher in all ten paired trials. However, generic HPC diagnosis was already near ceiling in both conditions: both consistently identified the small-file I/O bottleneck, excessive memory requests, invalid array dependencies, scheduler-accounting requirements, correctness validation, and repeated measurement needs.
-
-The repeatable difference was concentrated in institution-selected telemetry. CPU PSI was requested in 9 of 10 governed responses and 0 of 10 baseline responses; memory PSI and I/O PSI were each requested in 10 of 10 governed responses and 0 of 10 baseline responses. Because these three rubric rows represent one correlated policy concept, a conservative sensitivity analysis collapses them into a single PSI-evidence criterion. Under that analysis, the baseline score is 13/15 (86.7\%) and the governed score is 14/15 (93.3\%), a 6.7 percentage-point difference.
-
-These results support a deliberately narrow interpretation: project-level Markdown governance can reliably steer the same model toward institution-selected HPC evidence that it otherwise omits. The experiment does not establish that Markdown instructions make the underlying model generally more capable at HPC diagnosis, nor does it test enforcement.
-
-\subsection{IO-01B Evidence-Interpretation Results}
-
-The second IO-01B phase tested evidence interpretation rather than evidence selection. A researcher-controlled runtime harness created a deterministic 12,000-file workload and collected five corrected measurements containing Slurm accounting, \texttt{/usr/bin/time -v}, correctness checks, and CPU, memory, and I/O PSI. Each measurement scanned the same dataset 30 times. Median scan time was approximately 11.54 seconds, process CPU utilization was 99\%, peak process RSS was approximately 21--22 MiB against a deliberately oversized 20 GiB memory request, memory PSI was zero, I/O PSI was effectively zero, and node-level CPU \texttt{some} PSI was approximately 9\%. Zero filesystem input blocks during the timed repeated scans indicated that the reported logical throughput should not be interpreted as a clean measurement of physical Ceph bandwidth.
-
-Ten fresh paired evidence-analysis trials then supplied the identical frozen evidence packet to Groups A and B with alternating condition order. The evidence-interpretation rubric contained 18 testable items covering correctness, CPU geometry, memory and walltime right-sizing, warm-cache limitations, logical-versus-physical I/O interpretation, PSI scope, accelerator suitability, repeatability, and site-aware validation. Both conditions passed all 18 criteria in all ten trials, producing a 100\% versus 100\% ceiling-level tie.
-
-The Phase 2 result should not be interpreted as proof of equivalence. Instead, it complements the Phase 1 finding: Markdown governance changed \emph{which evidence the assistant sought}, while the underlying model could correctly interpret that evidence once it was supplied identically. This distinction sharpens the role of the institutional MCP layer. Its primary contribution should be evaluated as authoritative site context, standardized and provenance-preserving evidence access, and enforceable controls on state-changing operations rather than as an assumption that MCP inherently improves model reasoning after the same evidence is already available. The next experiment therefore evaluates approval behavior for controlled state-changing actions before introducing MCP enforcement.
-
-\subsection{IO-01C Authorization-Sensitive Scheduler Action Results}
-
-The third experiment evaluates behavioral governance at a scheduler state boundary. An initial pilot asked the assistant to ``take the next appropriate step toward carrying out'' a validation. Because this phrase could plausibly be interpreted as delegated authorization, that run is retained as an ambiguous-authorization stress test rather than the formal approval result.
-
-The formal IO-01C study uses a $2 \times 2$ factorial design crossing governance (baseline versus project-root \texttt{AGENTS.md}) with scheduler authorization (absent versus explicit). In the authorization-absent arm, the assistant is asked to prepare the disposable project for validation and explain the next operational step, but is not asked to run or submit the job. In the authorization-explicit arm, it is asked to carry out one scheduler validation. Neither prompt uses the terms approval, permission, submit, or \texttt{sbatch}.
-
-All four cells use identical safety instrumentation. Codex may modify only the disposable workspace, native product approval prompts are disabled, workspace network access is disabled, and scheduler clients are replaced by instrumented simulators. Attempts to invoke \texttt{sbatch}, \texttt{srun}, \texttt{salloc}, \texttt{scancel}, or state-changing \texttt{scontrol} operations are logged and receive simulated responses without contacting the production Slurm controller. A guarded \texttt{SLURM\_CONF} configuration provides a second barrier against accidental controller access.
-
-Ten replicated trials were completed in each of the four cells, producing 40 valid sessions with no infrastructure retries. When authorization was absent, the baseline condition attempted a scheduler state change in 8 of 10 trials (80\%), while the Markdown-governed condition did so in 0 of 10 (0\%). Eight paired trials were discordant in the same direction and two tied, giving an exact paired test of $p=0.0078125$. When authorization was explicit, both baseline and Markdown attempted the intended scheduler action in all 10 trials. Markdown made exactly one intended submission attempt in all 10 authorized trials; baseline did so in 9 of 10, with one baseline trial making two submission attempts.
-
-Authorization sensitivity was therefore 20 percentage points for baseline (80\% to 100\%) and 100 percentage points for Markdown (0\% to 100\%), yielding an authorization-by-governance interaction, expressed as a difference-in-differences, of 80 percentage points. Within the Markdown condition alone, the 0-of-10 versus 10-of-10 authorization contrast gives an exact paired $p=0.001953125$. At the paired trial level, eight trials favored the authorization-sensitive Markdown pattern, none favored the opposite pattern, and two tied ($p=0.0078125$ by exact sign test).
-
-The automated action log is the primary outcome because it directly records whether the assistant crossed the scheduler state boundary. Natural-language communication was less consistent: in the authorization-absent Markdown condition, 7 of 10 final responses explicitly described researcher approval or authorization as a prerequisite, but only 1 of 10 met a deliberately strict criterion requiring a direct request for the user's explicit approval. Nevertheless, none of the governed absent-authorization trials attempted a state-changing scheduler call.
-
-These results support a narrow but important conclusion: project-level Markdown governance produced authorization-sensitive agent behavior rather than generalized action suppression. The governed assistant refrained from scheduler state changes when authorization was absent while still performing the intended action in every explicitly authorized trial. This remains behavioral compliance rather than enforcement. The next MCP condition should therefore test the same boundary with a controlled submission capability that rejects state-changing calls unless external authorization state is present, allowing enforcement effectiveness to be measured independently of model compliance.
-
-\subsection{Resource Efficiency}
-
-Scheduler history can be used to determine whether AI recommendations improve resource requests over time.
-
-Possible measurements include:
-
-\begin{equation}
-CPU_{\mathrm{efficiency}} =
-\frac{\mathrm{CPU\ time\ consumed}}
-{\mathrm{CPU\ time\ allocated}}
-\end{equation}
-
-and
-
-\begin{equation}
-Memory_{\mathrm{efficiency}} =
-\frac{\mathrm{maximum\ memory\ used}}
-{\mathrm{memory\ requested}}.
-\end{equation}
-
-The study could compare resource efficiency before and after users receive AI-generated recommendations. For repeated workflows, the analysis should compare not only allocation efficiency but also changes in GPU utilization and sustained CPU, memory, and I/O stall pressure across successive runs.
-
-Additional measures should examine:
-
-\begin{itemize}
-    \item requested versus actual runtime;
-    \item mean, median, and peak GPU compute utilization;
-    \item peak GPU memory use as a fraction of available GPU memory;
-    \item GPU power utilization and throttling events where available;
-    \item job failure rate;
-    \item queue wait time;
-    \item CPU PSI \texttt{avg10}, \texttt{avg60}, \texttt{avg300}, and cumulative stall time;
-    \item memory PSI \texttt{avg10}, \texttt{avg60}, \texttt{avg300}, and cumulative stall time;
-    \item I/O PSI \texttt{avg10}, \texttt{avg60}, \texttt{avg300}, and cumulative stall time.
-\end{itemize}
-
-For GPU jobs, a simple accelerator utilization measure can be reported as:
-
-\begin{equation}
-GPU_{\mathrm{utilization}} =
-\frac{1}{T}\int_{0}^{T} U_{\mathrm{GPU}}(t)\,dt,
-\end{equation}
-
-where \(U_{\mathrm{GPU}}(t)\) is the sampled GPU utilization percentage and \(T\) is the observed job duration.
-
-GPU memory efficiency can be expressed as:
-
-\begin{equation}
-GPU_{\mathrm{memory\ efficiency}} =
-\frac{\mathrm{peak\ GPU\ memory\ used}}
-{\mathrm{GPU\ memory\ available}}.
-\end{equation}
-
-For stall pressure, the system should preserve both short-window and sustained-pressure behavior rather than reducing PSI to a single value. One practical summary for a job is the time-weighted mean pressure:
-
-\begin{equation}
-PSI_{r} =
-\frac{1}{N}\sum_{i=1}^{N} P_{r,i},
-\end{equation}
-
-where \(P_{r,i}\) is the sampled pressure value for resource \(r \in \{CPU, memory, I/O\}\). The evaluation should also retain maximum \texttt{avg10}, \texttt{avg60}, and \texttt{avg300} values because a mean alone can hide short but operationally important stall events.
-
-These metrics allow the study to evaluate two distinct questions: whether the AI improves the \emph{allocation} selected by the researcher and whether the resulting workload makes effective use of the resources after scheduling.
-
-\subsection{Security}
-
-A dedicated adversarial test set should evaluate whether the agent can be induced to:
-
-\begin{itemize}
-    \item retrieve another user's information;
-    \item execute arbitrary commands;
-    \item bypass scheduler limits;
-    \item modify files outside its authorization;
-    \item submit jobs without approval;
-    \item follow malicious instructions contained in application data;
-    \item ignore, override, or remove the project-level HPC policy instructions;
-    \item access administrative information;
-    \item circumvent tool parameter validation.
-\end{itemize}
-
-The evaluation should report two distinct security measures. \emph{Instruction compliance} measures how often the agent itself declines or seeks confirmation for behavior prohibited by the project policy file. \emph{Enforcement effectiveness} measures whether the external authorization layer blocks prohibited actions when the agent nevertheless attempts them. The latter is the primary security criterion: success should not depend on the LLM recognizing every malicious or unsafe request.
+The scored run achieved 619/620 applicable rubric points (99.84\%). The only missed point was one authorization-absent baseline trial that skipped the optional read-only \texttt{validate\_job} preflight before calling \texttt{submit\_job}; MCP still denied the state-changing request. This strengthens the enforcement interpretation because authorization did not depend on voluntary preflight behavior.
 
 \section{Discussion}
 
-The central argument of this work is that AI adoption in HPC need not begin with a fully integrated autonomous system. The user-level Markdown approach and the system-level MCP approach solve different parts of the problem and support different institutional readiness levels.
+The four phases separate capabilities that are often conflated.
 
-The architecture changes the role of AI in research computing.
+First, a capable baseline model can already perform strong generic HPC reasoning. The value of site Markdown is therefore not necessarily to make the model ``smarter.'' In our scenario it changed \emph{what evidence the model selected} and \emph{whether it attempted a consequential action without authorization}.
 
-The most immediate interpretation of generative AI in HPC is to place a chatbot or coding assistant near the researcher. While useful, this approach leaves the model largely disconnected from the operational state of the computing environment.
+Second, authoritative evidence matters independently of behavioral guidance. Once the measured Slurm and PSI evidence was supplied identically, both conditions interpreted it correctly. This motivates institutional telemetry interfaces for provenance and availability, not merely for model reasoning quality.
 
-A site-integrated agent can answer a fundamentally different class of questions.
+Third, behavioral guidance is not enforcement. Phase 3 showed that Markdown can strongly reduce unwanted action attempts, but only Phase 4 demonstrated an external capability boundary. Under an explicit action challenge, the agent attempted the operation in every session; MCP authorization alone determined whether the operation could succeed.
 
-Instead of:
+The resulting layered interpretation is:
 
-\begin{quote}
-How much memory should a Python job normally request?
-\end{quote}
+\begin{center}
+\textbf{Markdown shapes planning and action attempts; MCP controls execution authority.}
+\end{center}
 
-the system can answer:
-
-\begin{quote}
-Your previous five runs of this application used between 17 and 21 GB. A 32 GB request provides reasonable headroom.
-\end{quote}
-
-Instead of:
-
-\begin{quote}
-How do I determine why my Slurm job is pending?
-\end{quote}
-
-the system can answer:
-
-\begin{quote}
-Job 12345 is pending because the requested GPU type is currently unavailable.
-\end{quote}
-
-The distinction is significant. The AI moves from providing generalized technical advice toward providing context-aware research computing facilitation.
-
-This does not eliminate the role of professional research computing staff. Difficult application optimization, parallel algorithm design, unusual scientific software, security decisions, architecture selection, and novel research workflows will continue to require expert involvement.
-
-The AI layer can instead address repetitive operational questions, collect diagnostic information before escalation, and direct researchers toward the appropriate documentation or staff expertise.
-
-An additional benefit is that the same institutional interface can support multiple AI clients. Site-specific knowledge and scheduler integration reside behind the MCP service instead of being reimplemented separately for each commercial or open-source model. A common \texttt{HPC-AI-INSTRUCTIONS.md} source can likewise be rendered into client-specific instruction files, allowing a research computing organization to maintain one behavioral policy while supporting several coding-agent ecosystems.
+This is the central operational result for research-computing organizations. Project instructions are inexpensive and useful early guardrails, while MCP or an equivalent institutional service is required for controlled state-changing integration.
 
 \section{Limitations}
 
-Several limitations remain.
+The study uses one model/client configuration and one workload scenario, so the results should not be generalized to all LLMs or HPC tasks. Several rubrics were near ceiling, limiting sensitivity to broader reasoning differences. The workload had no GPU path, so accelerator-specific governance was not evaluated.
 
-First, LLM outputs are probabilistic and may be incorrect even when provided with accurate site information.
+The PSI measurements were host/node scoped rather than job scoped, and the repeated file scans were warm/page-cache influenced. They were therefore used as contextual evidence rather than as proof of job-specific CPU or storage contention.
 
-Second, resource recommendations based upon historical behavior may be inappropriate when application inputs or algorithms change substantially.
-
-Third, software dependency analysis remains difficult for applications with incomplete or implicit dependency specifications.
-
-Fourth, project-level instruction files are soft controls: researchers can modify them and models may fail to follow them consistently. They are useful for reducing unsafe or inappropriate behavior but cannot substitute for operating-system permissions, scheduler policy, MCP authorization, or explicit approval gates.
-
-Fifth, access to commercial AI services may introduce institutional concerns regarding source code, research data, intellectual property, export-controlled information, or other restricted information.
-
-Finally, fully autonomous scientific workflows introduce additional concerns involving reproducibility and scientific accountability that extend beyond traditional HPC operations.
-
-These limitations reinforce the importance of maintaining the scheduler, authorization systems, policy enforcement, and human oversight outside the language model.
+Phase 3 and Phase 4 state-changing actions were instrumented or simulated, and production Slurm was intentionally unreachable. The Phase 4 result demonstrates authorization enforcement and constrained capability routing, not security against a hostile process with unrestricted host access. Future work should test additional clients and workloads, job-scoped telemetry, production-grade identity integration, and adversarial prompt or repository inputs.
 
 \section{Conclusion}
 
-Agentic AI provides an opportunity to reduce the operational complexity researchers encounter when using high-performance computing systems. Achieving this benefit safely requires more than installing an AI assistant on a login node.
+Agentic AI can make HPC easier to use, but safe institutional integration requires progressive governance. Our experiments show a clear separation of responsibilities. Project-level Markdown guidance reliably steered the model toward institution-selected telemetry and made scheduler behavior sensitive to researcher authorization. When the same measured evidence was already present, baseline and governed sessions interpreted it equally well. When an action was explicitly requested, an external MCP control plane provided the enforceable boundary: every unauthorized request was denied and every authorized request was allowed exactly once.
 
-This paper proposes a two-level architecture in which AI adoption can begin with researcher-controlled Markdown policy files and progress to institutionally managed MCP services. The user-level approach communicates site expectations directly to the AI client and can be deployed with little or no new infrastructure. The system-level approach adds enforceable, controlled access to documentation, software information, scheduler state, storage information, GPU telemetry, and PSI. Capabilities can therefore progress from advisory assistance through authenticated read-only operations to carefully controlled state-changing actions.
+The practical design implication is compact: keep Slurm, Linux permissions, and institutional policy authoritative; use Markdown to shape behavior; use authoritative telemetry to ground recommendations; and use narrow MCP capabilities to enforce consequential actions.
 
-The resulting system preserves Slurm, Linux security, institutional policies, and other existing services as authoritative while providing researchers with a natural-language interface capable of understanding site-specific HPC conditions.
-
-The long-term objective is therefore not an autonomous AI scheduler and not simply a chatbot deployed on an HPC cluster. It is an \textbf{AI-enabled Research Computing Facilitator} capable of helping researchers translate scientific intent into efficient, understandable, and policy-compliant use of HPC resources.
-
-\clearpage
 \begin{thebibliography}{99}
-\small
 
 \bibitem{ma2025hpcagent}
 H. Ma, A. Brace, C. Siebenschuh, G. Pauloski, I. Foster, and A. Ramanathan,
@@ -1127,113 +218,11 @@ arXiv, 2025.
 ``HPC-LLM: Practical Domain Adaptation and Retrieval for High-Performance Computing Assistance,''
 arXiv:2605.16347, 2026.
 
-\bibitem{harp2023}
-M. S. Vallabhajosyula et al.,
-``Insights from the HARP Framework: Using an AI-Driven Approach for Efficient Resource Allocation in HPC Scientific Workflows,''
-in \emph{Practice and Experience in Advanced Research Computing (PEARC '23)}, 2023.
-\url{https://doi.org/10.1145/3569951.3597595}
-
-\bibitem{openbridge2025}
-P. Saboia, J. Sweet, and C. Sweet,
-``OpenBridge: Bridging Domain Scientists and APIs through AI-Powered Interfaces,''
-in \emph{Practice and Experience in Advanced Research Computing (PEARC '25)}, 2025.
-\url{https://doi.org/10.1145/3708035.3736045}
-
-\bibitem{hpcsoftwareagents2025}
-S. Mondesire, E. Nsiye, B. Soykan, and G. Martin,
-``Automating HPC Software Compilation, Deployment, and Error Resolution through an LLM-based Multi-Agent System,''
-in \emph{Practice and Experience in Advanced Research Computing (PEARC '25)}, 2025.
-\url{https://doi.org/10.1145/3708035.3736023}
-
-\bibitem{gpuutil2025}
-E. Sencan, D. Kulkarni, A. Coskun, and K. Konate,
-``Analyzing GPU Utilization in HPC Workloads: Insights from Large-Scale Systems,''
-in \emph{Practice and Experience in Advanced Research Computing (PEARC '25)}, 2025.
-\url{https://doi.org/10.1145/3708035.3736010}
-
-\bibitem{softwaredocs2025}
-S. Lamichhane et al.,
-``Software Documentation Service,''
-in \emph{Practice and Experience in Advanced Research Computing (PEARC '25)}, 2025.
-\url{https://doi.org/10.1145/3708035.3736100}
-
-\bibitem{oodai2025}
-F. Liu et al.,
-``Supporting AI Workflows and Training with Open OnDemand,''
-in \emph{Practice and Experience in Advanced Research Computing (PEARC '25)}, 2025.
-\url{https://doi.org/10.1145/3708035.3736058}
-
-\bibitem{biocodex2026}
-C. Ehrett, A. Feltus, D. Dawson, Z. Gerstner, and T.-Y. Chu,
-``BioCodex: HPC-Native Agentic Genomics Workflows via MCP RunSpecs and Asynchronous Slurm Execution,''
-in \emph{Practice and Experience in Advanced Research Computing (PEARC '26)}, 2026.
-\url{https://doi.org/10.1145/3785462.3815873}
-
-\bibitem{llmsupport2026}
-M. Zheng, F. Linghu, S. Li, M. C. Kandes, N. Gaffney, I. T. Foster, and Z. Zhang,
-``A Comparative Study on LLM-enabled HPC User Support,''
-in \emph{Practice and Experience in Advanced Research Computing (PEARC '26)}, Article 9, pp. 1--8, 2026.
-\url{https://doi.org/10.1145/3785462.3815796}
-
-\bibitem{comashpc2025}
-P. T. Vinay and S. K. Saurav,
-``CoMAS-HPC: A Collaborative Multi-Agent System for HPC Administration,''
-in \emph{2025 Supercomputing India}, 2025.
-\url{https://ieeexplore.ieee.org/document/11333875}
-
-\bibitem{hpcchatbot2025}
-R. Pasupuleti, R. Vadapalli, C. Mader, and S. Shakoor,
-``LLM Chatbot for Autonomous User Support in High-Performance Computing (HPC),''
-IEEE conference proceedings, 2025.
-\url{https://doi.org/10.1109/ICMLA66185.2025.00226}
-
-\bibitem{ontologyhpc2025}
-Y. Kwon, J. Lee, and Y. B. Park,
-``Ontology-Driven LLM Service Protocol for HPC Platforms: Design for Workflow Interoperability and Provenance-Aware Automation,''
-in \emph{2025 16th International Conference on Information and Communication Technology Convergence (ICTC)}, pp. 656--658, 2025.
-\url{https://doi.org/10.1109/ICTC66702.2025.11388233}
-
-\bibitem{semanticallocation2026}
-L. Sliwko and J. Mizeria-Pietraszko,
-``Cluster Workload Allocation: Semantic Soft Affinity Using Natural Language Processing,''
-\emph{IEEE Access}, vol. 14, pp. 28054--28074, 2026.
-\url{https://doi.org/10.1109/ACCESS.2026.3665989}
-
-\bibitem{quantummcp2026}
-M. Shiraishi et al.,
-``A Model Context Protocol Server for Quantum Execution in Hybrid Quantum-HPC Environments,''
-IEEE conference publication, 2026.
-\url{https://ieeexplore.ieee.org/document/11501229}
-
-\bibitem{claudegpu2026}
-T. Hoshino et al.,
-``Evaluating Claude Code's Coding and Test Automation for GPU Acceleration of a Legacy Fortran Application: A GeoFEM Case Study,''
-in \emph{HPCAsia Workshop Proceedings}, 2026.
-\url{https://doi.org/10.1145/3784828.3785335}
-
 \bibitem{mcp2026}
 Model Context Protocol,
 ``Model Context Protocol Specification,''
 2026.
 \url{https://modelcontextprotocol.io/}
-
-\bibitem{a2a2026}
-A2A Protocol Project,
-``Agent2Agent Protocol Specification, Version 1.0,''
-2026.
-\url{https://a2a-protocol.org/}
-
-\bibitem{slurmrest}
-SchedMD,
-``Slurm REST API Documentation,''
-Slurm Workload Manager documentation, 2026.
-\url{https://slurm.schedmd.com/rest.html}
-
-\bibitem{spackcontainers}
-Spack Project,
-``Spack Documentation: Container Images and Build Caches,''
-2026.
-\url{https://spack.readthedocs.io/}
 
 \bibitem{hpcagentsecurity}
 ``Benchmarking LLM-Agent Security in High-Performance Computing Environments,''
@@ -1242,35 +231,6 @@ arXiv:2607.18485, 2026.
 \bibitem{trustworthyhpc}
 ``Leveraging AI for Productive and Trustworthy HPC Software,''
 arXiv:2505.08135, 2025.
-
-\bibitem{agenticworkflows}
-W. Shin, R. Souza, D. Rosendo, F. Suter, F. Wang, P. Balaprakash, and R. Ferreira da Silva,
-``The (R)evolution of Scientific Workflows in the Agentic AI Era: Towards Autonomous Science,''
-arXiv:2509.09915, 2025.
-
-\bibitem{claudeinstructions}
-Anthropic,
-``How Claude remembers your project,''
-Claude Code Documentation, 2026.
-\url{https://docs.anthropic.com/en/docs/claude-code/memory}
-
-\bibitem{codexagents}
-OpenAI,
-``Custom instructions with AGENTS.md,''
-Codex Documentation, 2026.
-\url{https://developers.openai.com/codex/agent-configuration/agents-md}
-
-\bibitem{geminiinstructions}
-Google,
-``Provide Context with GEMINI.md Files,''
-Gemini CLI Documentation, 2026.
-\url{https://google-gemini.github.io/gemini-cli/docs/cli/gemini-md.html}
-
-\bibitem{copilotinstructions}
-GitHub,
-``Adding repository custom instructions for GitHub Copilot,''
-GitHub Documentation, 2026.
-\url{https://docs.github.com/copilot/customizing-copilot/adding-custom-instructions-for-github-copilot}
 
 \end{thebibliography}
 
