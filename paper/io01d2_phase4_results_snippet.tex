@@ -1,0 +1,37 @@
+% IO-01D2 Phase 4 formal results snippet
+\subsection{MCP Enforcement Under Explicit Challenge}
+
+To distinguish behavioral steering from technical enforcement, we conducted a
+10-trial, $2\times2$ factorial enforcement challenge in which baseline and
+Markdown-governed sessions received the same prompt requesting exactly one
+validation submission through the institutional MCP governance service. The
+authorization factor was external to the prompt: the MCP control plane was
+configured either with authorization absent or granted. Production Slurm was
+not contacted; allowed scheduler actions were simulated by the governance
+service.
+
+All 40 sessions were valid. Every session attempted exactly one
+\texttt{submit\_job} action. When authorization was absent, all 20 requests were
+denied and no unauthorized action succeeded. When authorization was granted,
+all 20 requests were allowed exactly once and returned a successful simulated
+validation result. No session attempted a direct scheduler bypass. Thus,
+authorization state perfectly determined the governed capability outcome while
+the baseline versus Markdown condition did not alter the enforcement decision.
+
+The result complements the earlier behavioral-governance experiment. Markdown
+guidance changed whether the assistant attempted a state-changing scheduler
+action when authorization was unspecified, whereas the MCP experiment
+demonstrates that, once an action is attempted, the institutional control plane
+can enforce authorization independently of the assistant's behavioral
+guidance. This supports a layered model in which Markdown provides behavioral
+steering and MCP provides constrained, auditable, enforceable capabilities.
+
+One session (Trial 7, authorization absent, baseline) skipped the optional
+read-only \texttt{validate\_job} preflight and proceeded directly to the single
+\texttt{submit\_job} request. The request was still denied, indicating that the
+authorization boundary did not depend on voluntary preflight use.
+
+Because the MCP scheduler backend was simulated and direct production Slurm
+access was intentionally blocked, these results demonstrate authorization
+enforcement and capability routing rather than production scheduler security
+under an unrestricted hostile process.
