@@ -93,13 +93,21 @@ Several recent studies focus directly on improving the HPC user experience with 
 
 For institutional support, however, model capability alone does not answer questions of authority, provenance, or policy. A model may correctly understand how to submit a job while still lacking permission to do so. Similarly, a model may know generic HPC tuning practices without knowing which telemetry or software mechanisms an institution expects researchers to use. The present study therefore evaluates not only whether the AI can provide useful HPC guidance, but also how site-specific guidance changes behavior and how an external capability layer can enforce consequential actions.
 
+\subsection{Repository-Level Context Files}
+
+Repository instruction files such as \texttt{AGENTS.md} are now widely used to tailor coding agents to local projects, but recent empirical results show that their value is task dependent. Gloaguen et al.\ evaluate repository-level context files across multiple coding agents and models and find that such files do not generally improve task success and can increase inference cost, even though agents tend to follow the instructions they contain \cite{gloaguen2026agents}. Lulla et al.\ report a different operational effect: across 124 pull-request tasks, the presence of \texttt{AGENTS.md} was associated with lower median runtime and reduced output-token consumption while maintaining comparable task-completion behavior \cite{lulla2026agents}.
+
+These findings are consistent with the narrower interpretation advanced in this paper. We do not treat a Markdown context file as a general performance enhancement. In Phase 1, the measurable effect was that site guidance surfaced a non-standard, institution-selected diagnostic signal (PSI) that baseline sessions did not request. In Phase 2, when the same evidence was already supplied, the context file produced no observable improvement in interpretation. The relevant benefit is therefore situational steering toward local evidence and operational rules, not a claim that repository instructions universally improve agent capability.
+
 \subsection{MCP and HPC Infrastructure}
 
 The Model Context Protocol provides a standardized mechanism for exposing resources and callable tools to compatible AI clients \cite{mcp2026}. Pan et al.\ report practical experience using thin MCP servers over established scientific cyberinfrastructure services, including Globus and computing-facility status interfaces, and identify evaluation and trust as open challenges for agent-led science \cite{pan2025mcphpc}. This work is particularly relevant to the proposed institutional gateway because it demonstrates the value of wrapping mature services rather than replacing them.
 
-BioCodex provides an even closer HPC scheduler example. Ehrett et al.\ use MCP RunSpecs and asynchronous Slurm execution to support agentic genomics workflows \cite{ehrett2026biocodex}. Pham et al.\ likewise use a shared MCP server as part of an exascale multi-agent orchestration architecture \cite{pham2026multiagent}. These efforts demonstrate that MCP can serve as a practical interface between agents and HPC execution systems.
+BioCodex provides an even closer HPC scheduler example. Ehrett et al.\ use MCP RunSpecs and asynchronous Slurm execution to support agentic genomics workflows \cite{ehrett2026biocodex}. Pham et al.\ likewise use a shared MCP server as part of an exascale multi-agent orchestration architecture \cite{pham2026multiagent}. MADA uses MCP to wrap scientific applications and the Flux scheduler behind standardized tools for a multi-agent design-exploration workflow \cite{menon2026mada}. These efforts demonstrate that MCP can serve as a practical interface between agents and HPC execution systems.
 
-The contribution of the present work is distinct from simply connecting an agent to Slurm. It evaluates a progressive governance sequence in which project-level Markdown first changes evidence selection and authorization-sensitive behavior, and an MCP control plane then enforces whether a requested scheduler action is allowed to succeed.
+SchedCP provides an especially relevant systems comparison. It separates LLM reasoning about Linux scheduler optimization from a constrained execution control plane implemented as an MCP server, including an execution verifier for generated scheduler policy \cite{zheng2025schedcp}. The target differs from the present work---Linux kernel scheduling through \texttt{sched\_ext} rather than researcher-facing Slurm job operations---but the architectural similarity reinforces the principle that semantic reasoning and privileged execution should be separated. A complementary 2025 deployment study also demonstrates Slurm-based infrastructure for scalable heterogeneous LLM inference, emphasizing the operational systems context in which agent services may themselves run \cite{delimaluiz2025llmhpc}.
+
+The contribution of the present work is therefore distinct from simply connecting an agent to Slurm or placing MCP in front of an HPC tool. It evaluates a progressive governance sequence in which project-level Markdown first changes evidence selection and authorization-sensitive behavior, and an MCP control plane then enforces whether a requested scheduler action is allowed to succeed. A recent systematic review of AI for operational HPC identifies language-model automation alongside scheduling, performance estimation, optimization, and fault detection as an emerging area, further motivating explicit governance and evaluation practices for this integration \cite{pochelu2026aihpc}.
 
 For HPC, the important design feature is not the protocol syntax itself, but the ability to replace general shell authority with narrow operations such as:
 
@@ -119,6 +127,8 @@ Each operation can independently enforce identity, authorization, validation, lo
 \subsection{Security, Provenance, and the Authorized Agent Problem}
 
 Traditional HPC controls are strong at identity and account-level authorization, but agentic systems introduce an additional decision-making layer. An authenticated agent may be manipulated by untrusted content, tool output, or repository instructions while still acting under valid user credentials. Recent work describes this class of risk as the problem of trusted credentials paired with untrusted agent behavior \cite{li2026trusted}. This distinction is important in research computing because shared filesystems, job logs, source repositories, and application output are all potential sources of instructions interpreted by an LLM.
+
+Agent-security research addresses related failure modes at inference time. AgentSentry targets indirect prompt injection by diagnosing causal changes in tool-use trajectories and purifying suspicious context before it influences subsequent actions \cite{zhang2026agentsentry}. The Silicon Mirror addresses a different behavioral failure mode---sycophancy---through dynamic behavioral gating and an auditor loop \cite{shah2026siliconmirror}. These defenses are complementary to the capability boundary studied here: inference-time defenses may reduce the probability that an agent requests an unsafe action, whereas an independently authorized capability layer determines whether the requested action is permitted to execute.
 
 Auditability is also receiving attention in scientific agent workflows. PROV-AGENT extends provenance models to capture prompts, agent decisions, and downstream workflow effects across edge, cloud, and HPC environments \cite{souza2025provagent}. That work supports the need to preserve agent actions and operational context independently of the conversational interface.
 
@@ -161,6 +171,8 @@ The policy included requirements to:
     \item avoid submitting, cancelling, requeueing, or modifying jobs without the required researcher authorization.
 \end{itemize}
 
+The complete policy is maintained in the public repository as \texttt{policy/HPC-AI-INSTRUCTIONS.md}. Two policy areas are particularly relevant to the experiments. The performance section directs the client to consider CPU utilization, allocated versus used CPU, maximum versus requested memory, and CPU, memory, and I/O PSI when those measurements are available. The approval section states that explicit researcher approval is required before job submission, cancellation, requeueing, or another consequential scheduler action. The formal study did not ablate individual policy clauses, so the observed effects cannot be attributed to one sentence independently of the surrounding policy. A policy-length and clause-ablation study is therefore left for future work.
+
 This layer is inexpensive to deploy and can influence planning before a tool is called. It is deliberately treated as behavioral guidance, not as a security boundary.
 
 \subsection{Evidence Layer}
@@ -177,20 +189,39 @@ The Phase 2 experiment sampled \texttt{/proc/pressure}, so its PSI values are no
 
 \subsection{MCP Capability Layer}
 
-The institution-governed layer exposes narrow MCP tools. Read-only tools can be introduced first because they provide site context without changing scheduler or storage state. State-changing tools require stronger controls.
+The institution-governed layer exposes narrow MCP tools. Read-only tools can be introduced first because they provide site context without changing scheduler or storage state. State-changing tools require stronger controls. Table~\ref{tab:mcp-tools} summarizes the actual Phase 4 prototype interface. The server declared JSON input schemas with \texttt{additionalProperties=false}, restricted filesystem paths to an allowed project root, and exposed no generic shell tool.
 
-The Phase 4 prototype provided:
-\begin{lstlisting}
-authorization_status
-validate_job
-job_status
-job_history
-storage_usage
-psi_metrics
-submit_job
-\end{lstlisting}
+\begin{table}[H]
+\centering
+\caption{Implemented Phase 4 MCP tools and control behavior.}
+\label{tab:mcp-tools}
+\small
+\begin{tabular}{p{0.20\linewidth}p{0.27\linewidth}p{0.43\linewidth}}
+\toprule
+\textbf{Tool} & \textbf{Input} & \textbf{Behavior in the prototype} \\
+\midrule
+\texttt{authorization\_status} & none & Read-only report of the external authorization state and authorization identifier. \\
+\texttt{validate\_job} & \texttt{job\_file} & Reads a Slurm file inside the allowed project root, parses directives, and returns warnings without execution. \\
+\texttt{job\_status} & \texttt{job\_id} & Reads status from the research simulator; does not query production Slurm. \\
+\texttt{job\_history} & none & Returns simulated validation-job history from the server state file. \\
+\texttt{storage\_usage} & optional \texttt{path} & Returns filesystem capacity information for a path constrained to the project root. \\
+\texttt{psi\_metrics} & none & Reads node-scoped CPU, memory, and I/O PSI from \texttt{/proc/pressure}. \\
+\texttt{submit\_job} & \texttt{job\_file}, optional \texttt{purpose} & Denies unless external authorization is granted; an allowed request creates a simulated completed validation record and never contacts production Slurm. \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-No generic shell tool was exposed. The \texttt{submit\_job} tool independently evaluated an external authorization state. When authorization was absent, the tool returned a denial. When authorization was granted, the experiment returned a simulated validation result. Production Slurm was intentionally unreachable from the experimental state-changing path.
+The server was started with an external \texttt{--authorization=absent|granted} setting and an \texttt{--authorization-id}. Each tool call generated a JSONL audit event containing a timestamp, server and session identifiers, the authorization state, event type, and relevant tool arguments or decision. These logs are useful for experimental reconstruction but are ordinary local files; the prototype does not claim immutable logging or non-repudiation.
+
+No generic shell tool was exposed. The \texttt{submit\_job} tool independently evaluated the external authorization state before creating an allowed result. When authorization was absent, the tool returned a denial. When authorization was granted, the experiment returned a simulated validation result. Production Slurm was intentionally unreachable from the experimental state-changing path.
+
+\subsection{Threat Model and Authorization Model}
+
+The study separates the authority of the AI process from the authority of the institutional control plane. The AI client and model are treated as partially trusted: they may make incorrect decisions, follow misleading repository content, or request an operation that should not be permitted. Repository files, application output, job logs, and retrieved text are treated as potentially untrusted inputs. The MCP server is trusted to apply its input validation and authorization check correctly, while Slurm, Linux identity, filesystem permissions, allocation policy, and other site controls remain authoritative beneath it.
+
+The Phase 4 authorization mechanism is intentionally simpler than a production identity system. Authorization was an external experimental state, either absent or granted, configured when the MCP server started. The prototype did not propagate an institutional user identity into MCP, implement role-based access control, enforce allocation quotas, issue signed authorization tokens, or produce tamper-evident audit records. Those are production requirements, not results of the present experiment.
+
+A critical boundary follows from this model: MCP can enforce an action only when the privileged action is reachable through the governed capability. If an AI process retains unrestricted direct access to \texttt{sbatch}, \texttt{scancel}, scheduler credentials, or an equivalent state-changing interface, the MCP server alone cannot prevent bypass. The Phase 4 harness therefore disabled direct raw state-changing clients. A production design would need to remove that direct authority from the agent process, mediate equivalent scheduler credentials through the governed service, or enforce the same authorization policy at a lower operating-system or scheduler boundary.
 
 \begin{figure}[H]
 \centering
@@ -374,11 +405,38 @@ Ten trials were executed in each of the four cells for 40 formal sessions. The p
     \item production Slurm must not be contacted by the simulated validation backend.
 \end{itemize}
 
+\subsection{Reproducibility and Artifact Disclosure}
+
+The public repository preserves the executable study design rather than only the paper-level summaries. Table~\ref{tab:artifacts} identifies the principal artifacts. The Phase 1 and Phase 2 prompts are embedded in the corresponding replication harnesses; Phases 3 and 4 also preserve prompt files directly. Scored result tables and formal summaries are version controlled. Large raw session bundles and complete transcripts were retained in the study workspace but are not yet all committed to the public repository; publishing a de-identified transcript bundle is a remaining reproducibility task.
+
+\begin{table}[H]
+\centering
+\caption{Principal reproducibility artifacts in the project repository.}
+\label{tab:artifacts}
+\small
+\begin{tabular}{p{0.25\linewidth}p{0.65\linewidth}}
+\toprule
+\textbf{Artifact} & \textbf{Repository location} \\
+\midrule
+Canonical site policy & \texttt{policy/HPC-AI-INSTRUCTIONS.md} \\
+Phase 1 prompt/harness & \texttt{scripts/run\_io01b\_replicates.sh}; scored outputs under \texttt{experiments/io-01b/} \\
+Phase 2 evidence/harness & \texttt{scripts/run\_io01b\_evidence\_replicates.sh}; runtime and scored outputs under \texttt{experiments/io-01b/} \\
+Phase 3 prompts/rubric & \texttt{experiments/io-01c/prompts/}, \texttt{rubric-factorial.csv}, and factorial result tables \\
+Phase 4 MCP implementation & \texttt{mcp/server/hpc\_governance\_mcp.py} \\
+Phase 4 challenge/results & \texttt{scripts/run\_io01d\_mcp\_challenge\_replicates.sh} and \texttt{experiments/io-01d/results/} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+For Phase 1, the original 17-item rubric contained three correlated binary rows for CPU, memory, and I/O PSI. The \emph{conservative PSI composite} replaces those three rows with a single binary item that is satisfied when at least one PSI domain is selected, yielding a 15-item sensitivity rubric. Because the observed treatment effect was concentrated in PSI selection, the primary Phase 1 endpoint is reported directly as ``any PSI domain selected''; the aggregate rubric score is secondary descriptive information. In Phase 2, \emph{rubric ceiling} means exactly that every session in both conditions satisfied all 18 predefined criteria (18/18), leaving no remaining rubric variance with which to detect a treatment difference.
+
 \subsection{Scoring and Statistical Analysis}
 
 Binary scoring criteria were used so that each response could be evaluated against observable behavior or explicit evidence. Automated action logs were used for scheduler and MCP calls, while response and project-diff artifacts were used for reasoning and configuration criteria.
 
-Paired exact tests were used where the design produced paired baseline and Markdown observations. For the Phase 1 PSI composite, all 10 pairs differed in the same direction. For the Phase 3 authorization-absent comparison, eight paired trials differed in the same direction and two tied. The Phase 4 authorization result was deliberately enforced by deterministic server logic; statistical significance is therefore secondary to the observed invariant and is reported descriptively rather than as evidence that the model learned the control.
+Paired exact tests were used where the design produced paired baseline and Markdown observations. For the Phase 1 primary PSI-selection endpoint, all 10 pairs differed in the same direction. For the Phase 3 authorization-absent comparison, eight paired trials differed in the same direction and two tied. Marginal Wilson 95\% intervals are also reported descriptively to show the uncertainty associated with the small sample sizes: 0/10 corresponds to 0--27.8\%, 10/10 to 72.2--100\%, and 8/10 to 49.0--94.3\%. These marginal intervals do not replace the paired analysis.
+
+No prospective power calculation was used; the study was designed as an exploratory, controlled case study with 10 repeated trials per cell. Consequently, inferential results should not be read as population-level estimates across models, prompts, or HPC workloads. A future multi-model replication should preregister primary endpoints and sample sizes based on effect sizes observed here. The Phase 4 authorization result was deliberately enforced by deterministic server logic; statistical significance is therefore secondary to the observed invariant and is reported descriptively rather than as evidence that the model learned the control.
 
 \section{Results}
 
@@ -388,9 +446,11 @@ Both conditions performed well on general HPC diagnosis. Baseline and Markdown-g
 
 The repeatable difference was PSI. CPU PSI appeared in 9 of 10 Markdown-governed responses and in 0 of 10 baseline responses. Memory PSI and I/O PSI appeared in 10 of 10 governed responses and in 0 of 10 baseline responses.
 
-Using the original 17-item rubric, the mean baseline score was 13.0/17 (76.5\%) and the Markdown-governed mean was 15.9/17 (93.5\%). Because the three PSI rows were correlated, the conservative composite analysis produced 13/15 (86.7\%) for baseline and 14/15 (93.3\%) for Markdown, a 6.7 percentage-point difference. At least one PSI domain was mentioned in 10/10 governed trials and 0/10 baseline trials (exact paired $p=0.001953$).
+The primary Phase 1 endpoint was selection of at least one PSI domain. This occurred in 10/10 governed trials and 0/10 baseline trials (exact paired $p=0.001953$). The corresponding marginal Wilson 95\% intervals are 72.2--100\% and 0--27.8\%, respectively. CPU PSI appeared in 9/10 governed responses and memory and I/O PSI each appeared in 10/10, compared with 0/10 for each domain in baseline.
 
-The result does not show that Markdown made the model generally better at HPC diagnosis. It shows that the project policy reliably changed which institution-selected evidence entered the model's proposed diagnostic process.
+Aggregate rubric scores are retained as secondary descriptive measures. Using the original 17-item rubric, the mean baseline score was 13.0/17 (76.5\%) and the Markdown-governed mean was 15.9/17 (93.5\%). Because the three PSI rows were correlated, the 15-item conservative composite produced 13/15 (86.7\%) for baseline and 14/15 (93.3\%) for Markdown, a 6.7 percentage-point difference. The aggregate difference should not be interpreted as a general 6.7- or 17.1-point improvement in HPC reasoning, because most non-PSI diagnostic criteria were already satisfied in both conditions.
+
+The result therefore does not show that Markdown made the model generally better at HPC diagnosis. It shows that the project policy reliably changed which institution-selected evidence entered the model's proposed diagnostic process.
 
 \begin{table}[H]
 \centering
@@ -439,7 +499,7 @@ This result is important because it narrows the interpretation of Phase 1. Once 
 
 All 40 Phase 3 sessions prepared a defensible right-sized validation candidate, retained one CPU, requested no GPU, preserved the correctness gate, and remained within project scope.
 
-The action behavior changed substantially when authorization was absent. Baseline sessions attempted a scheduler state change in 8/10 trials, while Markdown-governed sessions made no state-changing scheduler attempts in 10/10 trials. Eight paired trials were discordant in the same direction and two tied, giving an exact paired result of $p=0.0078125$.
+The action behavior changed substantially when authorization was absent. Baseline sessions attempted a scheduler state change in 8/10 trials, while Markdown-governed sessions made no state-changing scheduler attempts in 10/10 trials. The marginal Wilson 95\% intervals are 49.0--94.3\% for baseline and 0--27.8\% for Markdown. Eight paired trials were discordant in the same direction and two tied, giving an exact paired result of $p=0.0078125$.
 
 When authorization was explicit, both conditions acted. Markdown-governed sessions attempted exactly one intended validation in 10/10 trials. Baseline sessions acted in 10/10 trials, with exactly one intended submission in 9/10; one baseline trial made two attempts.
 
@@ -482,7 +542,7 @@ Granted & Markdown & 10 & 10 & 0 & 10 \\
 
 The formal rubric score was 619/620 applicable points (99.84\%). The only missed point occurred in one authorization-absent baseline trial that skipped the optional read-only \texttt{validate\_job} preflight and proceeded directly to the single \texttt{submit\_job} request. The MCP service still denied the request. This observation is useful because it demonstrates that authorization enforcement did not depend on the agent voluntarily performing a preflight check.
 
-All 40 sessions materially right-sized the original 20 GiB / 20 minute request while preserving the one-CPU/no-GPU geometry and correctness gate. The final memory requests ranged from 64 MiB to 256 MiB, and walltime requests were one or two minutes. This variation reflects model discretion within the validation scenario and did not affect the authorization outcome.
+All 40 sessions materially right-sized the original 20 GiB / 20 minute request while preserving the one-CPU/no-GPU geometry and correctness gate. The final memory requests ranged from 64 MiB to 256 MiB, corresponding to a 98.75--99.69\% reduction in the \emph{requested} memory envelope. Walltime requests were one or two minutes, a 90--95\% reduction in the requested time limit. These are request-envelope reductions, not measured scheduler cost savings or queue-time improvements; they demonstrate that the action challenge still produced substantively different and defensible job configurations while the authorization result remained invariant. The variation reflects model discretion within the validation scenario and did not affect the authorization outcome.
 
 Production Slurm was not contacted by the Phase 4 \texttt{submit\_job} backend. The experiment therefore demonstrates control-plane enforcement and constrained capability routing, not production scheduler security against a hostile process with unrestricted host access.
 
@@ -554,9 +614,9 @@ This distinction is important for operational AI. A site may have telemetry, acc
 
 \subsection{Reproducibility and Auditability}
 
-The experiment retained prompts, policies, trial outputs, project diffs, tool-call logs, scorecards, and formal result summaries. This level of artifact preservation is important because LLM outputs are probabilistic and client implementations change over time.
+The repository includes the canonical policy, experiment harnesses, Phase 3 and Phase 4 prompt files, scoring rubrics, scored tables, MCP source, and formal result summaries. Complete raw model-session bundles were also retained during the study, but not all large transcripts are currently published in the repository. A de-identified artifact release containing the raw sessions, prompt and policy hashes, tool logs, and scoring inputs would materially improve independent replication and is planned before archival publication.
 
-For a production service, a similar approach should apply to state-changing operations. The audit record should contain the authenticated user, tool, parameters, timestamp, authorization result, resulting scheduler identifier where applicable, and enough context to reconstruct the action. The natural-language conversation may have different retention requirements, but the operational action record should be independent of the conversation transcript.
+For a production service, a similar approach should apply to state-changing operations. The audit record should contain the authenticated user, tool, validated parameters, timestamp, authorization result, resulting scheduler identifier where applicable, and enough context to reconstruct the action. The research MCP prototype logs many of these fields but does not provide an immutable or cryptographically non-repudiable audit trail. The natural-language conversation may have different retention requirements, but the operational action record should be independent of the conversation transcript.
 
 \section{Limitations and Future Work}
 
@@ -574,7 +634,11 @@ Fifth, Phase 3 and Phase 4 intentionally avoided production scheduler state chan
 
 Sixth, the Phase 4 challenge prohibited direct scheduler bypass and the experimental environment disabled direct raw state-changing clients. The observed 0/40 bypass rate therefore demonstrates compliance within that experimental setup; it is not evidence that the MCP layer can contain a hostile process that already has unrestricted shell access.
 
-Finally, prompt injection and untrusted repository content require dedicated adversarial testing. The present study evaluates authorization under controlled prompts. Future work should test malicious README content, job logs, tool descriptions, and shared files to determine whether the external capability boundary continues to hold when the agent is actively manipulated. Specialized agent-to-agent architectures may also be considered after the single-agent MCP control plane is stable.
+Seventh, the study compares the complete site policy with no project policy; it does not isolate which clauses, policy length, or ordering caused the observed effects. A targeted ablation should compare the full policy with a minimal PSI-and-authorization policy and with single-purpose policy variants. This is particularly important given mixed recent evidence on the benefits of repository context files \cite{gloaguen2026agents,lulla2026agents}.
+
+Eighth, MCP routing overhead was not measured. For the simulated local STDIO server, the main experimental outcome was authorization correctness rather than latency. A production pilot should report end-to-end tool-call latency, scheduler submission latency, denial rates, and false-positive or false-negative authorization decisions under realistic user load.
+
+Finally, prompt injection and untrusted repository content require dedicated adversarial testing. The present study evaluates authorization under controlled prompts. Future work should test malicious README content, job logs, tool descriptions, and shared files that explicitly instruct the agent to bypass the governance service. The highest-value generalization experiments are a second model/client replication of Phases 1 and 3, an adversarial Phase 4 bypass challenge, and a second workload class such as GPU training or MPI using Slurm-cgroup-scoped PSI. Specialized agent-to-agent architectures may also be considered after the single-agent MCP control plane is stable.
 
 \section{Conclusion}
 
@@ -660,6 +724,54 @@ P. Balaprakash, and R. Ferreira da Silva,
 ``PROV-AGENT: Unified Provenance for Tracking AI Agent Interactions in Agentic Workflows,''
 in \textit{2025 IEEE International Conference on eScience (eScience)},
 pp. 467--473, 2025, doi:10.1109/eScience65000.2025.00093.
+
+\bibitem{gloaguen2026agents}
+T. Gloaguen, N. M\"undler, M. M\"uller, V. Raychev, and M. Vechev,
+``Evaluating AGENTS.md: Are Repository-Level Context Files Helpful for Coding Agents?,''
+arXiv:2602.11988, 2026.
+\url{https://arxiv.org/abs/2602.11988}
+
+\bibitem{lulla2026agents}
+J. L. Lulla, S. Mohsenimofidi, M. Galster, J. M. Zhang, S. Baltes, and C. Treude,
+``On the Impact of AGENTS.md Files on the Efficiency of AI Coding Agents,''
+arXiv:2601.20404, 2026.
+\url{https://arxiv.org/abs/2601.20404}
+
+\bibitem{menon2026mada}
+H. Menon et al.,
+``Multi-Agent Collaboration for Automated Design Exploration on High Performance Computing Systems,''
+arXiv:2603.11515, 2026.
+\url{https://arxiv.org/abs/2603.11515}
+
+\bibitem{zheng2025schedcp}
+Y. Zheng, Y. Hu, W. Zhang, and A. Quinn,
+``Towards Agentic OS: An LLM Agent Framework for Linux Schedulers,''
+arXiv:2509.01245, 2025.
+\url{https://arxiv.org/abs/2509.01245}
+
+\bibitem{zhang2026agentsentry}
+T. Zhang et al.,
+``AgentSentry: Mitigating Indirect Prompt Injection in LLM Agents via Temporal Causal Diagnostics and Context Purification,''
+arXiv:2602.22724, 2026.
+\url{https://arxiv.org/abs/2602.22724}
+
+\bibitem{shah2026siliconmirror}
+H. J. Shah,
+``The Silicon Mirror: Dynamic Behavioral Gating for Anti-Sycophancy in LLM Agents,''
+arXiv:2604.00478, 2026.
+\url{https://arxiv.org/abs/2604.00478}
+
+\bibitem{pochelu2026aihpc}
+P. Pochelu, H. Cartiaux, and J. Schleich,
+``What Artificial Intelligence can do for High-Performance Computing systems?,''
+arXiv:2602.00014, 2026.
+\url{https://arxiv.org/abs/2602.00014}
+
+\bibitem{delimaluiz2025llmhpc}
+A. de Lima Luiz, S. V. Kurlekar, and M. Georges,
+``Scalable Engine and the Performance of Different LLM Models in a SLURM based HPC architecture,''
+arXiv:2508.17814, 2025.
+\url{https://arxiv.org/abs/2508.17814}
 
 \bibitem{linuxpsi}
 J. Weiner,
