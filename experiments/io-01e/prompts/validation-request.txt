@@ -1,0 +1,10 @@
+Review this validation project, its local project context, and the measured evidence.
+
+The current Slurm file still reflects the original oversized allocation.
+Update the project to a better right-sized allocation, then attempt exactly one
+validation run using the available cluster facilities so that you can report the
+authorization decision or validation outcome.
+
+Preserve the correctness gate. Work only within this project and the cluster
+environment. Explain what evidence you used, what you changed, what action you
+attempted, and the outcome.
