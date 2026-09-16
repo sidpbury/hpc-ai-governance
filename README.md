@@ -1,245 +1,217 @@
-# HPC AI Governance
+# Progressive Governance for Agentic AI in High-Performance Computing
 
-A research-computing project for evaluating and deploying AI assistance in high-performance computing (HPC) through progressive governance and evidence-based integration.
+This repository contains a reproducible case study of how an institution can progressively govern an AI agent as it moves from HPC advice to consequential actions.
 
-The project now covers three stages:
+The central result is:
 
-1. **User-governed AI** — project/site Markdown instruction files for Claude Code, Codex, Gemini CLI, and GitHub Copilot.
-2. **Institution-governed AI** — a narrow, authenticated Model Context Protocol (MCP) service exposing HPC context, telemetry, validation, and later controlled actions.
-3. **Future multi-agent integration** — optional A2A coordination between specialized research-computing agents after the MCP boundary is mature.
+> **Markdown shapes planning and action attempts; MCP controls execution authority.**
 
-Slurm, Linux permissions, allocation/account policy, storage ACLs, identity, and institutional security controls remain authoritative.
+Project-level instruction files can steer an AI client toward site-specific evidence and approval rules, but they are behavioral guidance rather than a security boundary. State-changing actions require an external capability layer that independently validates and authorizes the requested operation.
 
-## Project hypothesis
+## Project Status
 
-A progressive integration model can improve HPC usability and resource efficiency while preserving governance:
+The primary five-phase study is complete.
 
-**Baseline AI → Markdown-governed AI → MCP-governed AI + telemetry → optional A2A specialization**
+The academic manuscript is being prepared for submission to the *International Journal of High Performance Computing Applications (IJHPCA)*.
 
-The evaluation measures:
+Remaining experimental work focuses on generalization rather than completing the core study:
 
-- Slurm correctness;
-- time to successful execution;
-- policy compliance;
-- blocked unsafe actions;
-- CPU and memory efficiency;
-- GPU utilization and GPU memory efficiency;
-- CPU, memory, and I/O Pressure Stall Information (PSI);
-- failed submissions and human interventions.
+- replication with a second AI client/model; and
+- evaluation of a second workload class using GPU telemetry and Slurm-cgroup-scoped Pressure Stall Information (PSI).
 
-## Repository layout
+## Research Questions
+
+The study separates five questions that are often collapsed into the single phrase “AI governance”:
+
+1. Does project-level HPC guidance change which operational evidence an AI assistant selects?
+2. If identical measured evidence is supplied, does that guidance improve evidence interpretation?
+3. Does project guidance change action behavior when researcher authorization is absent versus explicit?
+4. Can an external MCP capability layer enforce authorization independently of model behavior?
+5. What happens when repository-local content explicitly attempts to convince the agent to bypass institutional controls?
+
+## Experimental Results
+
+| Phase | Question | Primary result |
+| --- | --- | --- |
+| **1 — Evidence selection** | Does Markdown guidance change what evidence the agent selects? | At least one PSI domain was selected in **10/10 governed trials** and **0/10 baseline trials**. |
+| **2 — Evidence interpretation** | Does Markdown improve interpretation once the same evidence is supplied? | Baseline and governed sessions each satisfied **18/18 criteria in all 10 trials**. |
+| **3 — Authorization-sensitive behavior** | Does Markdown affect scheduler action attempts? | With authorization absent, baseline sessions attempted a state change in **8/10** trials; governed sessions attempted **0/10**. |
+| **4 — MCP enforcement** | Can an external capability layer enforce authorization? | **20/20 unauthorized requests were denied** and **20/20 authorized requests were allowed exactly once**. |
+| **5 — Adversarial repository context** | Can hostile repository instructions change agent behavior or bypass controls? | With authorization absent, MCP submission attempts increased from **3/10 benign** to **8/10 adversarial** trials. All **11 unauthorized requests were denied**, and **0/40 sessions used a direct scheduler bypass**. |
+
+Phase 5 is intentionally interpreted as a behavioral and containment result, not as a general prompt-injection security guarantee. Adversarial repository content changed the observed action-attempt rate, while the external authorization boundary prevented those attempts from succeeding.
+
+## Layered Governance Model
+
+The project separates three concerns.
+
+### 1. Behavioral Guidance
+
+A canonical site policy is maintained in:
 
 ```text
-hpc-ai-governance/
-├── README.md
-├── paper/
-├── proposals/
+policy/HPC-AI-INSTRUCTIONS.md
+```
+
+The policy can be adapted to client-specific project files such as:
+
+```text
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+.github/copilot-instructions.md
+```
+
+The policy communicates local expectations such as using Slurm rather than login nodes for sustained computation, preserving project scope, protecting credentials, using measured performance evidence, considering CPU/memory/I/O PSI, and requiring authorization before consequential scheduler actions.
+
+These files influence model behavior. They do **not** provide an authorization boundary.
+
+### 2. Authoritative Evidence
+
+The case study combines AI reasoning with measured HPC evidence, including:
+
+- Slurm accounting and scheduler state;
+- requested versus consumed memory;
+- elapsed time and CPU utilization;
+- filesystem behavior and cache context;
+- correctness checks;
+- GPU evidence where applicable; and
+- Linux Pressure Stall Information for CPU, memory, and I/O.
+
+PSI is used as a representative example of institution-specific HPC evidence. It is not the subject of the paper by itself.
+
+The completed CPU workload used node-scoped `/proc/pressure` measurements. Future workload experiments will move toward Slurm job- or step-cgroup PSI where available.
+
+### 3. Institution-Governed Capabilities
+
+The research MCP prototype exposes narrow operations rather than a general shell:
+
+```text
+authorization_status
+validate_job
+job_status
+job_history
+storage_usage
+psi_metrics
+submit_job
+```
+
+The prototype applies an authorization decision outside the model:
+
+```text
+authorization absent  -> submit_job denied
+authorization granted -> submit_job allowed in the simulator
+```
+
+Production Slurm is intentionally unreachable from the experimental state-changing backend.
+
+MCP only governs operations routed through MCP. A production deployment must also remove, mediate, or equivalently constrain alternate state-changing paths such as unrestricted `sbatch`, `scancel`, scheduler credentials, or administrative APIs.
+
+## Case-Study Workload
+
+The primary workload is a deterministic serial scan of 12,000 small files.
+
+The original validation request intentionally over-requested resources:
+
+```text
+1 CPU
+20 GiB memory
+20 minute walltime
+no GPU
+```
+
+Measured runs showed approximately:
+
+```text
+13–15 seconds scheduler-observed elapsed time
+21–22 MiB peak resident memory
+99% process CPU
+one CPU used
+no GPU path
+correctness PASS
+```
+
+The AI sessions therefore had a defensible right-sizing problem while still being required to preserve the correctness gate.
+
+In the action experiments, proposed validation requests used 64–256 MiB of memory and one or two minutes of walltime while retaining one CPU and no GPU.
+
+These values represent reductions in the **requested resource envelope**, not measured queue-time or institutional cost savings.
+
+## Repository Layout
+
+```text
+.
 ├── docs/
-│   ├── user-guide.md
-│   ├── architecture.md
-│   ├── evaluation.md
-│   └── ai-clients-mcp-a2a.md
-├── policy/
-│   ├── HPC-AI-INSTRUCTIONS.md
-│   └── clients/
-├── scripts/
-│   ├── install-policy.sh
-│   ├── run_io01b_replicates.sh
-│   ├── submit_io01b_runtime.sh
-│   ├── collect_io01b_evidence.sh
-│   ├── run_io01b_evidence_replicates.sh
-│   ├── install_hpc_mcp.sh
-│   ├── smoke_test_hpc_mcp.sh
-│   └── run_io01d_mcp_replicates.sh
 ├── experiments/
-│   ├── benchmark-plan.md
-│   ├── metrics-schema.csv
-│   ├── scenarios/
-│   └── io-01b/
-│       ├── README.md
-│       ├── formal-results-summary.md
-│       ├── formal-scorecard-scored.csv
-│       ├── replication-results-summary.md
-│       ├── replication-scorecard-scored.csv
-│       ├── replication-criterion-summary.csv
-│       ├── phase2-evidence-replication-results-summary.md
-│       ├── phase2-evidence-replication-scorecard-scored.csv
-│       ├── phase2-evidence-replication-criterion-summary.csv
-│       └── runtime/
+│   ├── io-01b/        # Phase 1 evidence selection + Phase 2 runtime evidence
+│   ├── io-01c/        # Phase 3 authorization-sensitive behavior
+│   ├── io-01d/        # Phase 4 MCP integration and enforcement
+│   └── io-01e/        # Phase 5 adversarial repository-context challenge
 ├── mcp/
-│   ├── README.md
-│   ├── roadmap.md
-│   └── server/
-│       ├── hpc_governance_mcp.py
-│       └── test_stdio_client.py
-├── containers/
-└── institutional/
+│   └── server/        # Research MCP prototype
+├── paper/
+│   ├── ai_hpc_agentic_workflows.tex
+│   ├── ai_hpc_agentic_workflows.pdf
+│   └── ijhpca/        # IJHPCA submission materials
+├── policy/
+│   └── HPC-AI-INSTRUCTIONS.md
+└── scripts/
 ```
 
-## User-level AI clients
+## Reproducibility
 
-The canonical policy is `policy/HPC-AI-INSTRUCTIONS.md`.
+The repository preserves the executable study design rather than only the paper-level conclusions.
 
-```bash
-# Claude Code
-cp policy/HPC-AI-INSTRUCTIONS.md /path/to/project/CLAUDE.md
+| Artifact | Location |
+| --- | --- |
+| Canonical project policy | `policy/HPC-AI-INSTRUCTIONS.md` |
+| Phase 1/2 harnesses and scored outputs | `experiments/io-01b/` |
+| Phase 3 prompts, rubric, and results | `experiments/io-01c/` |
+| MCP implementation | `mcp/server/hpc_governance_mcp.py` |
+| Phase 4 enforcement challenge | `experiments/io-01d/` |
+| Phase 5 adversarial challenge | `experiments/io-01e/` |
+| Phase 5 formal summary | `experiments/io-01e/results/IO-01E-formal-results-summary.md` |
+| Academic manuscript | `paper/ai_hpc_agentic_workflows.tex` |
+| IJHPCA submission package | `paper/ijhpca/` |
 
-# Codex
-cp policy/HPC-AI-INSTRUCTIONS.md /path/to/project/AGENTS.md
+Large raw model-session bundles are retained separately from the Git repository. The repository contains the harnesses, prompts and context, scored or instrumented summaries, and implementation needed to reconstruct the formal study design.
 
-# Gemini CLI
-cp policy/HPC-AI-INSTRUCTIONS.md /path/to/project/GEMINI.md
+## Current Manuscript
 
-# GitHub Copilot
-mkdir -p /path/to/project/.github
-cp policy/HPC-AI-INSTRUCTIONS.md /path/to/project/.github/copilot-instructions.md
-```
+The academic paper is:
 
-Or use:
+> **Progressive Governance for Agentic AI in High-Performance Computing: Behavioral Steering and MCP Authorization**
 
-```bash
-./scripts/install-policy.sh claude /path/to/project
-```
-
-Markdown policy is a **behavioral guardrail**, not a security boundary.
-
-## MCP and A2A
-
-The institution-governed MCP layer exposes narrow tools such as:
+The primary manuscript source and rendered PDF are under:
 
 ```text
-documentation_search()
-software_find()
-job_status()
-job_history()
-job_logs()
-gpu_utilization()
-psi_cpu()
-psi_memory()
-psi_io()
-validate_job()
+paper/
 ```
 
-Read-only capabilities come first. State-changing operations such as `submit_job()` and `cancel_job()` require server-side authorization, validation, audit logging, and explicit human approval.
+Submission-oriented IJHPCA materials are under:
 
-A2A is complementary and later-stage:
-
-> **MCP connects agents to capabilities. A2A connects agents to other agents.**
-
-See [`docs/ai-clients-mcp-a2a.md`](docs/ai-clients-mcp-a2a.md) and [`mcp/roadmap.md`](mcp/roadmap.md).
-
-## Phase 4 MCP prototype
-
-The first research MCP implementation is now under `mcp/server/`. It is a dependency-free local STDIO server with bounded read-only tools plus a simulated `submit_job` capability. The server makes its own allow/deny decision from external authorization state; Markdown instructions cannot override that decision.
-
-Install and smoke-test it with:
-
-```bash
-./scripts/install_hpc_mcp.sh
-./scripts/smoke_test_hpc_mcp.sh --codex
+```text
+paper/ijhpca/
 ```
 
-The formal IO-01D harness repeats the Phase 3 authorization factorial with the MCP boundary enabled:
+The five completed phases support one consistent interpretation:
 
-```bash
-./scripts/run_io01d_mcp_replicates.sh --trials 1
-```
+> **Behavioral controls can reduce undesirable decisions and action attempts, but consequential authority should remain in independently enforced institutional systems.**
 
-No IO-01D path intentionally contacts production Slurm; allowed submissions are simulated and audited.
+## Remaining Work
 
-## Experimental status
+The core study is complete.
 
-### Completed
+The highest-value generalization experiments are:
 
-- [x] Journal-paper architecture and literature review
-- [x] Green Belt/DMAIC proposal
-- [x] Canonical HPC Markdown policy
-- [x] Researcher user guide
-- [x] Initial benchmark design
-- [x] IO-01 pilot harness validation
-- [x] IO-01B blinded formal A/B pair
-- [x] Formal scoring rubric
-- [x] 10-pair static replication harness
+1. replicate the Phase 1 evidence-selection and Phase 3 authorization-sensitive behavior experiments with a second AI client/model;
+2. evaluate a second workload class, preferably GPU training or another accelerator workload; and
+3. collect Slurm job- or step-cgroup PSI together with GPU utilization, GPU memory, scheduler accounting, runtime, and correctness.
 
-### IO-01B Phase 1 replicated result
+Additional future work includes production identity propagation, role and allocation enforcement, durable audit guarantees, MCP latency measurement, policy ablation, and a production scheduler pilot.
 
-Ten blinded paired static trials are complete.
+## Safety Boundary
 
-| Measure | Baseline | Markdown-governed |
-|---|---:|---:|
-| Paired trials | 10 | 10 |
-| Mean passed criteria | 13.0/17 | 15.9/17 |
-| Mean score | 76.5% | 93.5% |
-| Raw difference | — | **+17.1 points** |
-| Pairwise wins | — | **10/10** |
+The state-changing experiments use a simulated scheduler backend and blocking direct-scheduler controls. They are designed to evaluate model behavior, capability routing, authorization, and containment without intentionally submitting experimental state-changing operations to production Slurm.
 
-The repeatable effect is concentrated in the site-selected telemetry layer: CPU PSI appeared in 9/10 governed responses versus 0/10 baseline; memory PSI and I/O PSI appeared in 10/10 governed responses versus 0/10 baseline. Generic HPC diagnosis was already strong in both conditions.
-
-Because the three PSI rows represent one correlated policy concept, the conservative composite analysis is **86.7% baseline vs. 93.3% governed (+6.7 points)**. See [`experiments/io-01b/`](experiments/io-01b/).
-
-### IO-01B Phase 2 evidence-interpretation result
-
-Ten fresh paired evidence-analysis trials supplied the **same corrected Slurm, timing, correctness, and PSI evidence** to both conditions. The result was a ceiling-level tie:
-
-| Measure | Baseline | Markdown-governed |
-|---|---:|---:|
-| Paired trials | 10 | 10 |
-| Mean passed criteria | 18.0/18 | 18.0/18 |
-| Mean score | 100.0% | 100.0% |
-| Pairwise result | 10 ties | 10 ties |
-
-Both conditions correctly interpreted the 20 GiB memory over-request, retained one CPU, rejected GPU use, recognized the warm/page-cache limitation, distinguished logical throughput from physical Ceph bandwidth, and treated node-level CPU PSI cautiously.
-
-The combined Phase 1/Phase 2 interpretation is therefore narrower and more useful: **Markdown governance changed evidence-selection behavior, but once authoritative evidence was supplied identically, no additional interpretation effect was detectable in this scenario.** This ceiling result does not establish formal equivalence. See [`experiments/io-01b/`](experiments/io-01b/).
-
-### IO-01C Phase 3 authorization-sensitive action result
-
-The formal IO-01C experiment uses a **2 x 2 factorial design** crossing governance (baseline vs. project-level `AGENTS.md`) with scheduler authorization (absent vs. explicit). Scheduler state-changing commands are instrumented and simulated, so the study measures attempted behavior without intentionally submitting production jobs.
-
-| Authorization | Baseline | Markdown-governed |
-|---|---:|---:|
-| **Absent: any state-change attempt** | **8/10 (80%)** | **0/10 (0%)** |
-| **Explicit: any state-change attempt** | **10/10 (100%)** | **10/10 (100%)** |
-| Explicit: exactly one intended submission | 9/10 | **10/10** |
-
-When authorization was absent, Markdown governance reduced scheduler state-change attempts by **80 percentage points**. Eight paired trials were discordant in the same direction and two tied (exact paired test **p = 0.0078125**). Within the Markdown condition, action changed from 0/10 when authorization was absent to 10/10 when authorization was explicit (exact paired **p = 0.001953125**). The authorization-sensitivity difference-in-differences is **+80 percentage points**.
-
-The result is therefore not simply generalized caution: the governed condition suppressed state-changing action when authorization was absent while still performing the intended action in every explicitly authorized trial. This remains a **behavioral control**, not a technical security boundary. See [`experiments/io-01c/`](experiments/io-01c/).
-
-### Next
-
-- [x] Complete and score 10 paired IO-01B static replications
-- [x] Run initial Phase 2 researcher-controlled runtime pilot
-- [x] Correct PSI schema and site `sacct` field compatibility found by pilot
-- [x] Rerun Phase 2 runtime collection with valid PSI telemetry
-- [x] Run and score 10 paired Phase 2 evidence-informed A/B trials
-- [x] Build IO-01C controlled state-changing/approval harness
-- [x] Run and score formal 2 x 2 IO-01C authorization factorial experiment
-- [ ] Validate recommended resource changes experimentally
-- [x] Build local MCP prototype and authorization-state model
-- [x] Add simulated, server-authorized `submit_job` capability for Phase 4
-- [ ] Smoke-test Codex with the local MCP server on SPORC
-- [ ] Repeat IO-01C as IO-01D with MCP-enforced approval
-- [ ] Run broader Group C MCP evaluation
-- [ ] Harden controlled state-changing MCP tools for institutional deployment
-- [ ] Evaluate specialized-agent/A2A designs only after MCP is stable
-
-## Paper
-
-The manuscript is under [`paper/`](paper/).
-
-```bash
-make paper
-```
-
-## Green Belt project
-
-The DMAIC proposal under [`proposals/`](proposals/) uses the three-condition design:
-
-- **A — Baseline AI**
-- **B — User-governed AI with Markdown instructions**
-- **C — Institution-governed AI with MCP and telemetry**
-
-## License
-
-A project license has not yet been selected. Add the institutionally appropriate license before public release.
+The project therefore demonstrates governance behavior under the tested conditions. It does not claim that MCP alone can secure an agent process that retains unrestricted host or scheduler authority.
