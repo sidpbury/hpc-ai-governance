@@ -36,14 +36,7 @@
 \title{Progressive Governance for Agentic AI in High-Performance Computing:\\
 Behavioral Steering and MCP Authorization}
 
-\author{
-Sidney L. Pendelberry\\
-Rochester Institute of Technology\\
-College of Engineering\\
-Department of Industrial and Systems Engineering\\
-Rochester, New York, USA
-}
-
+\author{}
 \date{}
 
 \begin{document}
@@ -266,7 +259,7 @@ This diagnostic pattern is the thread used by the first four experimental phases
 
 All formal experiments used the same AI client/model configuration: Codex CLI 0.149.1 with GPT-5.6 Sol. Fresh sessions were used for each trial. Baseline and Markdown-governed conditions used the same model, workload files, and task prompt within a phase; the primary difference was whether the project-level HPC policy was present.
 
-The experiments were executed in a research-computing environment using Slurm. Computational resources and support were provided by Research Computing at Rochester Institute of Technology \citep{ritrc2026}. During the study, the site configuration reported:
+The experiments were executed in a research-computing environment using Slurm. During the study, the site configuration reported:
 
 \begin{lstlisting}
 JobAcctGatherType = jobacct_gather/cgroup
@@ -385,7 +378,7 @@ The natural-language task prompt did not tell the model to use MCP and did not p
 
 \subsection{Reproducibility and Artifact Disclosure}
 
-The public repository preserves the executable study design rather than only the paper-level summaries. Table~\ref{tab:artifacts} identifies the principal artifacts. The Phase 1 and Phase 2 prompts are embedded in the corresponding replication harnesses; Phases 3--5 preserve their scenario, prompt, or context files directly. Scored result tables and formal summaries are version controlled. Large raw session bundles and complete transcripts were retained in the study workspace but are not yet all committed to the public repository; publishing a de-identified transcript bundle is a remaining reproducibility task. For Phase 5, the machine-generated MCP and direct-action tables are the evidence used for the reported action outcomes; the generated \texttt{master-scorecard.csv} remained an unfilled template and is not used as a source for any Phase 5 claim.
+A version-controlled repository preserves the executable study design rather than only the paper-level summaries. Table~\ref{tab:artifacts} identifies the principal artifacts. The Phase 1 and Phase 2 prompts are embedded in the corresponding replication harnesses; Phases 3--5 preserve their scenario, prompt, or context files directly. Scored result tables and formal summaries are version controlled. Large raw session bundles and complete transcripts were retained in the study workspace but are not yet all committed to the public repository; publishing a de-identified transcript bundle is a remaining reproducibility task. For Phase 5, the machine-generated MCP and direct-action tables are the evidence used for the reported action outcomes; the generated \texttt{master-scorecard.csv} remained an unfilled template and is not used as a source for any Phase 5 claim.
 
 \begin{table}[H]
 \centering
@@ -656,9 +649,7 @@ The long-term objective is therefore not to place an autonomous AI scheduler on 
 
 
 \section*{Acknowledgements}
-The authors acknowledge Research Computing at the Rochester Institute of Technology for providing computational resources and support that have contributed to the research results reported in this publication.
-
-Generative AI tools were used during manuscript preparation to assist with literature-search organization, reference compilation, and editorial restructuring. All cited sources, numerical results, experiment artifacts, and manuscript claims were checked by the author against primary records or retained study outputs. No AI system is listed as an author.
+Generative AI tools were used during manuscript preparation to assist with literature-search organization, reference compilation, and editorial restructuring. All cited sources, numerical results, experiment artifacts, and manuscript claims were checked against primary records or retained study outputs. No AI system is listed as an author.
 
 \section*{Statements and Declarations}
 
@@ -678,16 +669,9 @@ The author declared no potential conflicts of interest with respect to the resea
 The author received no specific grant from any funding agency in the public, commercial, or not-for-profit sectors for this research.
 
 \subsection*{Data availability}
-The public project repository contains the canonical policy, experiment harnesses, scoring materials, MCP prototype source, and formal result summaries used in this study. It is available at \url{https://github.com/sidpbury/hpc-ai-governance}. Large raw model-session bundles were retained during the study but are not all publicly released; a de-identified artifact release would further improve independent replication.
+A public project repository contains the canonical policy, experiment harnesses, scoring materials, MCP prototype source, and formal result summaries used in this study. The repository URL is withheld during peer review to preserve author anonymity and will be restored in the accepted manuscript. Large raw model-session bundles were retained during the study but are not all publicly released; a de-identified artifact release would further improve independent replication.
 
 \begin{thebibliography}{99}
-
-\bibitem[Rochester Institute of Technology(2026)]{ritrc2026}
-Rochester Institute of Technology (2026) Research Computing Services.
-Rochester Institute of Technology.
-DOI: 10.34788/0S3G-QD15.
-Available at: \url{https://www.rit.edu/researchcomputing/}
-(accessed 14 September 2026).
 
 \bibitem[Cappello et al.(2026)]{cappello2026eaira}
 Cappello F, Madireddy S, Underwood R, et al. (2026) EAIRA: Establishing a methodology for evaluating LLMs as scientific research assistants. \textit{The International Journal of High Performance Computing Applications}. Epub ahead of print 8 September 2026. DOI: 10.1177/10943420261467786.
